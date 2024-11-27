@@ -5,30 +5,57 @@ Usage
 Basic Usage
 ----------
 
-To use StreamlitChat in a project::
+To use StreamlitChat in a project, create a Streamlit app file (e.g., ``app.py``)::
 
-    import streamlitchat
+    import streamlit as st
+    from streamlitchat.chat_interface import ChatInterface
+    from streamlitchat.ui import ChatUI
     import os
     from dotenv import load_dotenv
-    
+    import logging
+
+    # Configure logging
+    logger = logging.getLogger(__name__)
+
     # Load environment variables
     load_dotenv()
-    
-    # Initialize the chat interface
-    chat = streamlitchat.ChatInterface(
-        api_key=os.getenv("OPENAI_API_KEY", ""),
-        model_name="gpt-3.5-turbo"  # Default model
-    )
-    
-    # Run the chat interface
-    chat.run()
+
+    def main():
+        """Main application entry point."""
+        try:
+            # Set page config
+            st.set_page_config(
+                page_title="StreamlitChat",
+                page_icon="💬",
+                layout="wide"
+            )
+            
+            # Initialize chat interface
+            chat_interface = ChatInterface(
+                api_key=os.getenv("OPENAI_API_KEY", ""),
+                model_name="gpt-3.5-turbo"
+            )
+            
+            # Create and render UI
+            ui = ChatUI(chat_interface)
+            st.title("StreamlitChat")
+            
+            # This will be called by Streamlit's async runtime
+            st.write("Chat interface ready!")
+            
+        except Exception as e:
+            logger.error(f"Error in main app: {e}", exc_info=True)
+            st.error(f"Application error: {str(e)}")
+
+    if __name__ == "__main__":
+        main()
 
 Configuration
 ------------
 
 You can customize the chat interface with various parameters::
 
-    chat = streamlitchat.ChatInterface(
+    chat_interface = ChatInterface(
         api_key=os.getenv("OPENAI_API_KEY", ""),
         model_name="gpt-3.5-turbo",
         temperature=0.7,
@@ -47,28 +74,11 @@ The following environment variables are supported:
 - ``STREAMLIT_THEME``: UI theme ('light' or 'dark')
 - ``LOG_LEVEL``: Logging level (DEBUG, INFO, WARNING, ERROR)
 
-Example Configuration
--------------------
+Running the Application
+---------------------
 
-Here's a complete example with all available options::
+To run the application::
 
-    import streamlitchat
-    import os
-    from dotenv import load_dotenv
+    streamlit run app.py
 
-    # Load environment variables from .env file
-    load_dotenv()
-
-    # Initialize with custom settings
-    chat = streamlitchat.ChatInterface(
-        api_key=os.getenv("OPENAI_API_KEY", ""),
-        model_name="gpt-4",
-        temperature=0.7,
-        top_p=0.9,
-        presence_penalty=0.0,
-        frequency_penalty=0.0,
-        api_base=None  # Optional custom API endpoint
-    )
-
-    # Run the interface
-    chat.run()
+The application will start and open in your default web browser.
