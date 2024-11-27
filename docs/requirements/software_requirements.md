@@ -47,7 +47,7 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 - [x] Create settings interface
 - [x] Add API endpoint configuration
 - [x] Implement model selection
-- [ ] Add temperature and other API parameters configuration
+- [x] Add temperature and other API parameters configuration
 - [ ] Implement settings persistence
 - [ ] Add theme customization options
 

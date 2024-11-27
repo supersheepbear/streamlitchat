@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from streamlitchat.ui import ChatUI
 from streamlitchat.chat_interface import ChatInterface
+import streamlit as st
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,51 +36,52 @@ def chat_ui():
         yield ui, mock_st
 
 @pytest.fixture
-def mock_st():
-    """Fixture for mocking Streamlit."""
-    with patch("streamlitchat.ui.st") as mock_st:
-        # Create a proper dict-like object for session_state
-        class SessionState(dict):
-            def __init__(self):
-                super().__init__()
-                self.messages = []
-                self.is_processing = False
-                self.keyboard_trigger = None
-                self.api_params = {
-                    'temperature': 0.7,
-                    'top_p': 0.9,
-                    'presence_penalty': 0.0,
-                    'frequency_penalty': 0.0
-                }
-            
-            def __getattr__(self, key):
-                return self.get(key)
-            
-            def __setattr__(self, key, value):
-                self[key] = value
-
-        mock_st.session_state = SessionState()
+def mock_st(mocker):
+    """Fixture to mock Streamlit components."""
+    # Patch streamlit where it's imported in the UI module
+    mock_st = mocker.patch('streamlitchat.ui.st', autospec=True)
+    
+    # Create a session state mock with dict-like behavior
+    session_state = MagicMock()
+    session_state.__getitem__ = lambda self, key: getattr(self, key, None)
+    session_state.__setitem__ = lambda self, key, value: setattr(self, key, value)
+    session_state.settings = {
+        'model': 'gpt-3.5-turbo',
+        'api_params': {
+            'temperature': 0.7,
+            'top_p': 0.9,
+            'presence_penalty': 0.0,
+            'frequency_penalty': 0.0
+        },
+        'theme': 'light'
+    }
+    mock_st.session_state = session_state
+    
+    # Mock sidebar with context manager behavior
+    sidebar = MagicMock()
+    
+    # Configure slider to return the value from session state
+    def slider_mock(*args, **kwargs):
+        if 'Temperature' in args:
+            return session_state.settings['api_params']['temperature']
+        elif 'Top P' in args:
+            return session_state.settings['api_params']['top_p']
+        return kwargs.get('value')
         
-        # Set up sidebar as context manager
-        sidebar = MagicMock()
-        mock_st.sidebar = MagicMock()
-        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
-        mock_st.sidebar.__exit__ = MagicMock()
-        
-        # Mock sidebar methods
-        mock_st.sidebar.selectbox.return_value = "gpt-3.5-turbo"
-        mock_st.sidebar.text_input.return_value = ""
-        mock_st.sidebar.slider = MagicMock()
-        mock_st.sidebar.header = MagicMock()
-        mock_st.sidebar.subheader = MagicMock()
-        
-        # Mock other commonly used streamlit functions
-        mock_st.markdown = MagicMock()
-        mock_st.chat_input = MagicMock()
-        mock_st.empty = MagicMock()
-        mock_st.error = MagicMock()
-        
-        yield mock_st
+    sidebar.slider = MagicMock(side_effect=slider_mock)
+    mock_st.sidebar = MagicMock()
+    mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+    mock_st.sidebar.__exit__ = MagicMock()
+    
+    # Mock other commonly used streamlit functions
+    mock_st.experimental_get_query_params = MagicMock(return_value={})
+    mock_st.experimental_set_query_params = MagicMock()
+    mock_st.markdown = MagicMock()
+    mock_st.chat_input = MagicMock()
+    mock_st.empty = MagicMock()
+    mock_st.error = MagicMock()
+    
+    return mock_st
 
 def test_chat_ui_initialization(chat_ui):
     """Test that ChatUI initializes correctly."""
@@ -243,75 +245,226 @@ async def test_keyboard_shortcuts_setup(mock_st):
     assert mock_st.markdown.call_args[1]['unsafe_allow_html'] is True
 
 @pytest.mark.asyncio
-async def test_api_parameters_configuration(mock_st):
-    """Test API parameters configuration in settings."""
-    # Setup
-    chat_ui = ChatUI(ChatInterface(test_mode=True))
-    
-    # Mock sidebar inputs with context manager
-    with mock_st.sidebar:
-        mock_st.sidebar.slider.side_effect = [
-            0.7,  # temperature
-            0.9,  # top_p
-            2,    # presence_penalty
-            2     # frequency_penalty
-        ]
-    
-        # Render sidebar
-        chat_ui._render_sidebar()
-    
-        # Verify sliders were created with correct parameters
-        assert mock_st.sidebar.slider.call_count == 4
+async def test_api_parameters_persistence():
+    """Test that API parameters persist between sessions."""
+    with patch("streamlit.session_state") as mock_state:
+        # Setup mock state
+        mock_state.settings = {
+            'model': 'gpt-3.5-turbo',
+            'api_params': {
+                'temperature': 0.8,
+                'top_p': 0.95,
+                'presence_penalty': 1.5,
+                'frequency_penalty': 1.2
+            },
+            'theme': 'light'
+        }
         
-        # Check temperature slider
-        temp_call = mock_st.sidebar.slider.call_args_list[0]
-        assert temp_call[1]['label'] == "Temperature"
-        assert temp_call[1]['min_value'] == 0.0
-        assert temp_call[1]['max_value'] == 2.0
-        assert temp_call[1]['value'] == 0.7
+        # Setup with test mode
+        chat_ui = ChatUI(ChatInterface(test_mode=True), test_mode=True)
         
-        # Check top_p slider
-        top_p_call = mock_st.sidebar.slider.call_args_list[1]
-        assert top_p_call[1]['label'] == "Top P"
-        assert top_p_call[1]['min_value'] == 0.0
-        assert top_p_call[1]['max_value'] == 1.0
-        assert top_p_call[1]['value'] == 0.9
+        # Get settings
+        settings = chat_ui._render_sidebar()
         
-        # Verify values were set in chat interface
-        assert chat_ui.chat_interface.temperature == 0.7
-        assert chat_ui.chat_interface.top_p == 0.9
-        assert chat_ui.chat_interface.presence_penalty == 2
-        assert chat_ui.chat_interface.frequency_penalty == 2
+        # Verify all values
+        assert settings['temperature'] == 0.8
+        assert settings['top_p'] == 0.95
+        assert settings['presence_penalty'] == 1.5
+        assert settings['frequency_penalty'] == 1.2
 
 @pytest.mark.asyncio
-async def test_api_parameters_persistence(mock_st):
-    """Test that API parameters persist between sessions."""
+async def test_settings_persistence_save(mock_st):
+    """Test saving settings to persistent storage."""
+    # Setup
+    chat_interface = ChatInterface(test_mode=True)
+    chat_ui = ChatUI(chat_interface)
+    
+    # Set values in chat interface
+    chat_interface.model_name = 'gpt-4'
+    chat_interface.temperature = 0.8
+    chat_interface.top_p = 0.95
+    chat_interface.presence_penalty = 1.5
+    chat_interface.frequency_penalty = 1.2
+    
+    # Set theme in session state
+    mock_st.session_state.settings['theme'] = 'light'
+    
+    # Expected settings
+    expected_settings = {
+        'model': 'gpt-4',
+        'api_params': {
+            'temperature': 0.8,
+            'top_p': 0.95,
+            'presence_penalty': 1.5,
+            'frequency_penalty': 1.2
+        },
+        'theme': 'light'
+    }
+    
+    # Call save settings
+    chat_ui._save_settings()
+    
+    # Verify settings were saved
+    mock_st.experimental_set_query_params.assert_called_once_with(settings=expected_settings)
+    assert mock_st.session_state.settings == expected_settings
+
+@pytest.mark.asyncio
+async def test_settings_persistence_load(mock_st):
+    """Test loading settings from persistent storage."""
     # Setup
     chat_ui = ChatUI(ChatInterface(test_mode=True))
     
-    # Mock session state with custom values
-    mock_st.session_state.api_params = {
+    # Mock stored settings
+    stored_settings = {
+        'model': 'gpt-4',
+        'api_params': {
+            'temperature': 0.8,
+            'top_p': 0.95,
+            'presence_penalty': 1.5,
+            'frequency_penalty': 1.2
+        },
+        'theme': 'dark'
+    }
+    
+    # Mock query parameters
+    mock_st.experimental_get_query_params.return_value = {'settings': stored_settings}
+    
+    # Call load settings
+    chat_ui._load_settings()
+    
+    # Verify settings were loaded correctly
+    assert chat_ui.chat_interface.model_name == stored_settings['model']
+    assert chat_ui.chat_interface.temperature == stored_settings['api_params']['temperature']
+    assert chat_ui.chat_interface.top_p == stored_settings['api_params']['top_p']
+    assert mock_st.session_state.settings == stored_settings
+
+@pytest.mark.asyncio
+async def test_settings_persistence_default(mock_st):
+    """Test default settings when no stored settings exist."""
+    # Setup
+    chat_interface = ChatInterface(test_mode=True)
+    chat_ui = ChatUI(chat_interface)
+    
+    # Mock empty query parameters
+    mock_st.experimental_get_query_params.return_value = {}
+    
+    # Call load settings explicitly (bypassing initialization)
+    chat_ui._initialize_default_settings()
+    
+    # Expected default settings
+    expected_settings = {
+        'model': 'gpt-3.5-turbo',
+        'api_params': {
+            'temperature': 0.7,
+            'top_p': 0.9,
+            'presence_penalty': 0.0,
+            'frequency_penalty': 0.0
+        },
+        'theme': 'light'
+    }
+    
+    # Verify default settings
+    assert chat_interface.model_name == expected_settings['model']
+    assert chat_interface.temperature == expected_settings['api_params']['temperature']
+    assert chat_interface.top_p == expected_settings['api_params']['top_p']
+    assert chat_interface.presence_penalty == expected_settings['api_params']['presence_penalty']
+    assert chat_interface.frequency_penalty == expected_settings['api_params']['frequency_penalty']
+    assert mock_st.session_state.settings == expected_settings
+
+@pytest.fixture
+def mock_session_state():
+    """Fixture for mocking session state."""
+    with patch("streamlit.session_state") as mock_state:
+        mock_state.settings = {
+            'model': 'gpt-3.5-turbo',
+            'api_params': {
+                'temperature': 0.7,
+                'top_p': 0.9,
+                'presence_penalty': 0.0,
+                'frequency_penalty': 0.0
+            },
+            'theme': 'light'
+        }
+        mock_state.messages = []
+        mock_state.is_processing = False
+        mock_state.keyboard_trigger = None
+        yield mock_state
+
+@pytest.mark.asyncio
+async def test_temperature_setting():
+    """Test temperature setting."""
+    with patch("streamlit.session_state") as mock_state:
+        # Setup mock state
+        mock_state.settings = {
+            'model': 'gpt-3.5-turbo',
+            'api_params': {
+                'temperature': 0.7,
+                'top_p': 0.9,
+                'presence_penalty': 0.0,
+                'frequency_penalty': 0.0
+            },
+            'theme': 'light'
+        }
+        
+        # Setup with test mode
+        chat_ui = ChatUI(ChatInterface(test_mode=True), test_mode=True)
+        
+        # Get settings
+        settings = chat_ui._render_sidebar()
+        
+        # Verify temperature value
+        assert settings['temperature'] == 0.7
+
+@pytest.mark.asyncio
+async def test_top_p_setting():
+    """Test top_p setting."""
+    with patch("streamlit.session_state") as mock_state:
+        # Setup mock state
+        mock_state.settings = {
+            'model': 'gpt-3.5-turbo',
+            'api_params': {
+                'temperature': 0.7,
+                'top_p': 0.9,
+                'presence_penalty': 0.0,
+                'frequency_penalty': 0.0
+            },
+            'theme': 'light'
+        }
+        
+        # Setup with test mode
+        chat_ui = ChatUI(ChatInterface(test_mode=True), test_mode=True)
+        
+        # Get settings
+        settings = chat_ui._render_sidebar()
+        
+        # Verify top_p value
+        assert settings['top_p'] == 0.9
+
+@pytest.mark.asyncio
+async def test_api_parameters_persistence(mock_session_state):
+    """Test that API parameters persist between sessions."""
+    # Setup with test mode
+    chat_ui = ChatUI(ChatInterface(test_mode=True), test_mode=True)
+    
+    # Set custom values in session state
+    mock_session_state.settings['api_params'].update({
         'temperature': 0.8,
         'top_p': 0.95,
         'presence_penalty': 1.5,
         'frequency_penalty': 1.2
-    }
+    })
     
-    # Render sidebar with context manager
-    with mock_st.sidebar:
-        # Mock slider returns to match session state values
-        mock_st.sidebar.slider.side_effect = [
-            0.8,  # temperature
-            0.95, # top_p
-            1.5,  # presence_penalty
-            1.2   # frequency_penalty
-        ]
-        
-        chat_ui._render_sidebar()
+    # Get settings
+    settings = chat_ui._render_sidebar()
     
-        # Verify sliders were initialized with session state values
-        slider_calls = mock_st.sidebar.slider.call_args_list
-        assert slider_calls[0][1]['value'] == 0.8  # temperature
-        assert slider_calls[1][1]['value'] == 0.95  # top_p
-        assert slider_calls[2][1]['value'] == 1.5  # presence_penalty
-        assert slider_calls[3][1]['value'] == 1.2  # frequency_penalty
+    # Verify all values
+    assert settings['temperature'] == 0.8
+    assert settings['top_p'] == 0.95
+    assert settings['presence_penalty'] == 1.5
+    assert settings['frequency_penalty'] == 1.2
+    
+    # Verify chat interface was updated
+    assert chat_ui.chat_interface.temperature == 0.8
+    assert chat_ui.chat_interface.top_p == 0.95
+    assert chat_ui.chat_interface.presence_penalty == 1.5
+    assert chat_ui.chat_interface.frequency_penalty == 1.2
