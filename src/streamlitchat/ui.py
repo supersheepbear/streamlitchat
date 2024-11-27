@@ -9,6 +9,10 @@ from typing import Optional, List, Dict, Any, Set
 from .chat_interface import ChatInterface
 import logging
 import time
+import re
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name, guess_lexer
+from pygments.formatters import HtmlFormatter
 
 # Add logger
 logger = logging.getLogger(__name__)
@@ -81,17 +85,49 @@ class ChatUI:
         )
         st.title("StreamlitChat")
 
+    def _process_code_blocks(self, content: str) -> str:
+        """Process code blocks in message content for syntax highlighting.
+        
+        Args:
+            content: Message content containing possible code blocks
+            
+        Returns:
+            Processed content with syntax highlighted code blocks
+        """
+        def replace_code_block(match):
+            code = match.group(2)
+            lang = match.group(1) or None
+            
+            try:
+                if lang:
+                    lexer = get_lexer_by_name(lang)
+                else:
+                    lexer = guess_lexer(code)
+                
+                highlighted = highlight(code, lexer, HtmlFormatter())
+                return f'<div class="highlight">{highlighted}</div>'
+            except Exception:
+                # Fallback to plain code block if highlighting fails
+                return match.group(0)
+        
+        # Find code blocks with or without language specification
+        pattern = r'```(\w+)?\n(.*?)\n```'
+        return re.sub(pattern, replace_code_block, content, flags=re.DOTALL)
+
     def _display_message(self, message: Dict[str, Any]) -> None:
         """Display a single message in the chat interface.
-
+        
         Args:
             message: Message dictionary containing 'role' and 'content'.
         """
         role = message["role"]
         content = message["content"]
         
+        # Process code blocks before displaying
+        processed_content = self._process_code_blocks(content)
+        
         with st.chat_message(role):
-            st.markdown(content)
+            st.markdown(processed_content, unsafe_allow_html=True)
 
     def _display_messages(self) -> None:
         """Display paginated messages in the chat interface."""
