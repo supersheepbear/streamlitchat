@@ -7,23 +7,24 @@ from streamlitchat.ui import ChatUI
 import os
 from dotenv import load_dotenv
 import logging
+import asyncio
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
+# Set page config first, before any other Streamlit commands
+st.set_page_config(
+    page_title="StreamlitChat Advanced Example",
+    page_icon="💬",
+    layout="wide"
+)
+
 # Load environment variables
 load_dotenv()
 
-def main():
+async def main():
     """Main application entry point."""
     try:
-        # Set page config
-        st.set_page_config(
-            page_title="StreamlitChat Advanced Example",
-            page_icon="💬",
-            layout="wide"
-        )
-        
         # Initialize chat interface with custom settings
         chat_interface = ChatInterface(
             api_key=os.getenv("OPENAI_API_KEY", ""),
@@ -35,16 +36,20 @@ def main():
             api_base=None
         )
         
-        # Create and render UI
+        # Create UI instance
         ui = ChatUI(chat_interface)
+        
+        # Display title
         st.title("StreamlitChat Advanced Example")
         
-        # This will be called by Streamlit's async runtime
-        st.write("Chat interface ready!")
+        # Render the chat interface
+        ui.render_sidebar()  # Show settings sidebar
+        ui.display_messages()  # Show message history
+        await ui.handle_user_input()  # Show chat input
         
     except Exception as e:
         logger.error(f"Error in main app: {e}", exc_info=True)
         st.error(f"Application error: {str(e)}")
 
 if __name__ == "__main__":
-    main() 
+    asyncio.run(main()) 

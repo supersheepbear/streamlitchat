@@ -10,6 +10,9 @@ from streamlitchat.chat_interface import ChatInterface
 import logging
 import time
 import re
+from pathlib import Path
+import json
+from datetime import datetime
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.formatters import HtmlFormatter
@@ -27,23 +30,29 @@ class ChatUI:
     MAX_RECYCLED_COMPONENTS = 30  # Maximum number of recycled message components
 
     def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -> None:
-        """Initialize the ChatUI.
-
-        Args:
-            chat_interface: Optional ChatInterface instance. If not provided,
-                          a new instance will be created.
-            test_mode: If True, enables test mode which skips actual UI rendering.
-        """
+        """Initialize the ChatUI."""
         self.chat_interface = chat_interface or ChatInterface()
         self.test_mode = test_mode
-        self.current_page = 0  # Start at first page
+        self.current_page = 0
         self.scroll_position = 0
         self.recycled_components: Dict[str, Any] = {}
+        
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+        
         self._initialize_session_state()
         if not test_mode:
             self._setup_page()
             self._setup_keyboard_shortcuts()
-            self._load_conversation()  # Load persisted conversation
+            
+            # Try to load most recent conversation if it exists
+            saved_chats = self._list_saved_conversations()
+            if saved_chats:
+                try:
+                    self._load_conversation_from_file(saved_chats[0].name)
+                except Exception as e:
+                    logger.warning(f"Failed to load most recent conversation: {e}")
 
     def _initialize_session_state(self) -> None:
         """Initialize Streamlit session state variables."""
@@ -77,12 +86,6 @@ class ChatUI:
 
     def _setup_page(self) -> None:
         """Configure the Streamlit page settings."""
-        st.set_page_config(
-            page_title="StreamlitChat",
-            page_icon="💬",
-            layout="wide",
-            initial_sidebar_state="auto"
-        )
         st.title("StreamlitChat")
 
     def _process_code_blocks(self, content: str) -> str:
@@ -187,6 +190,9 @@ class ChatUI:
 
     def _render_sidebar(self) -> Dict[str, Any]:
         """Render the sidebar with settings and controls."""
+        # Generate a unique timestamp for this render
+        timestamp = int(time.time() * 1000)
+        
         with st.sidebar:
             st.subheader("Settings")
             
@@ -196,7 +202,8 @@ class ChatUI:
                 min_value=0.0,
                 max_value=2.0,
                 value=st.session_state.settings['api_params']['temperature'],
-                help="Controls randomness in responses"
+                help="Controls randomness in responses",
+                key=f"temperature_slider_{timestamp}"
             )
             st.session_state.settings['api_params']['temperature'] = temperature
             self.chat_interface.temperature = temperature
@@ -207,7 +214,8 @@ class ChatUI:
                 min_value=0.0,
                 max_value=1.0,
                 value=st.session_state.settings['api_params']['top_p'],
-                help="Controls diversity via nucleus sampling"
+                help="Controls diversity via nucleus sampling",
+                key=f"top_p_slider_{timestamp}"
             )
             st.session_state.settings['api_params']['top_p'] = top_p
             self.chat_interface.top_p = top_p
@@ -218,7 +226,8 @@ class ChatUI:
                 min_value=0.0,
                 max_value=2.0,
                 value=st.session_state.settings['api_params']['presence_penalty'],
-                help="Controls repetition penalty"
+                help="Controls repetition penalty",
+                key=f"presence_penalty_slider_{timestamp}"
             )
             st.session_state.settings['api_params']['presence_penalty'] = presence_penalty
             self.chat_interface.presence_penalty = presence_penalty
@@ -229,7 +238,8 @@ class ChatUI:
                 min_value=0.0,
                 max_value=2.0,
                 value=st.session_state.settings['api_params']['frequency_penalty'],
-                help="Controls token frequency penalty"
+                help="Controls token frequency penalty",
+                key=f"frequency_penalty_slider_{timestamp}"
             )
             st.session_state.settings['api_params']['frequency_penalty'] = frequency_penalty
             self.chat_interface.frequency_penalty = frequency_penalty
@@ -238,9 +248,33 @@ class ChatUI:
             theme = st.selectbox(
                 "Select Theme",
                 options=['light', 'dark'],
-                index=0 if st.session_state.settings['theme'] == 'light' else 1
+                index=0 if st.session_state.settings['theme'] == 'light' else 1,
+                key=f"theme_selector_{timestamp}"
             )
             st.session_state.settings['theme'] = theme
+            
+            # Add conversation history section
+            st.divider()
+            st.subheader("Chat History")
+            
+            # Save current conversation
+            if st.button("💾 Save Current Conversation", key=f"save_chat_{timestamp}"):
+                self._save_conversation_to_file()
+            
+            # Load previous conversations
+            saved_chats = self._list_saved_conversations()
+            if saved_chats:
+                st.write("Load previous conversation:")
+                for chat_file in saved_chats:
+                    # Extract timestamp from filename
+                    file_timestamp = chat_file.stem.replace("chat_", "")
+                    formatted_time = datetime.strptime(file_timestamp, "%Y%m%d_%H%M%S").strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    # Create a button for each saved conversation
+                    if st.button(f"📁 {formatted_time}", key=f"load_{chat_file.name}_{timestamp}"):
+                        self._load_conversation_from_file(chat_file.name)
+            else:
+                st.info("No saved conversations found")
             
             return {
                 'temperature': temperature,
@@ -282,12 +316,28 @@ class ChatUI:
         # Reset keyboard trigger
         st.session_state.keyboard_trigger = None
 
+    def render_sidebar(self) -> None:
+        """Render the settings sidebar."""
+        return self._render_sidebar()
+
+    def display_messages(self) -> None:
+        """Display chat messages."""
+        return self._display_messages()
+
+    async def handle_user_input(self) -> None:
+        """Handle user input and generate responses."""
+        return await self._handle_user_input()
+
     async def render(self) -> None:
         """Render the complete chat interface."""
-        settings = self._render_sidebar()
-        self._display_messages()
-        await self._handle_keyboard_shortcuts()
-        await self._handle_user_input()
+        try:
+            # Render all UI components
+            self.render_sidebar()
+            self.display_messages()
+            await self.handle_user_input()
+        except Exception as e:
+            logger.error(f"Error rendering UI: {e}", exc_info=True)
+            st.error(f"UI rendering error: {str(e)}")
 
     def _save_settings(self) -> None:
         """Save current settings to persistent storage."""
@@ -307,8 +357,9 @@ class ChatUI:
             # Update session state
             st.session_state.settings = current_settings
             
-            # Save to URL parameters for persistence
-            st.experimental_set_query_params(settings=current_settings)
+            # Convert settings to JSON string for query parameters
+            settings_str = json.dumps(current_settings)
+            st.query_params['settings'] = settings_str
             logger.info("Settings saved to persistent storage")
         except Exception as e:
             logger.error(f"Error saving settings: {e}")
@@ -316,23 +367,29 @@ class ChatUI:
     def _load_settings(self) -> None:
         """Load settings from persistent storage."""
         try:
-            params = st.experimental_get_query_params()
-            stored_settings = params.get('settings', [None])[0]
+            settings_str = st.query_params.get('settings')
             
-            if stored_settings and isinstance(stored_settings, dict):
-                # Update chat interface settings
-                if 'model' in stored_settings:
-                    self.chat_interface.model_name = stored_settings['model']
-                if 'api_params' in stored_settings:
-                    params = stored_settings['api_params']
-                    self.chat_interface.temperature = params.get('temperature', self.chat_interface.temperature)
-                    self.chat_interface.top_p = params.get('top_p', self.chat_interface.top_p)
-                    self.chat_interface.presence_penalty = params.get('presence_penalty', self.chat_interface.presence_penalty)
-                    self.chat_interface.frequency_penalty = params.get('frequency_penalty', self.chat_interface.frequency_penalty)
+            if settings_str:
+                # Parse JSON string back to dictionary
+                stored_settings = json.loads(settings_str)
                 
-                # Update session state settings
-                st.session_state.settings.update(stored_settings)
-                logger.info("Settings loaded from persistent storage")
+                if isinstance(stored_settings, dict):
+                    # Update chat interface settings
+                    if 'model' in stored_settings:
+                        self.chat_interface.model_name = stored_settings['model']
+                    if 'api_params' in stored_settings:
+                        params = stored_settings['api_params']
+                        self.chat_interface.temperature = params.get('temperature', self.chat_interface.temperature)
+                        self.chat_interface.top_p = params.get('top_p', self.chat_interface.top_p)
+                        self.chat_interface.presence_penalty = params.get('presence_penalty', self.chat_interface.presence_penalty)
+                        self.chat_interface.frequency_penalty = params.get('frequency_penalty', self.chat_interface.frequency_penalty)
+                    
+                    # Update session state settings
+                    st.session_state.settings.update(stored_settings)
+                    logger.info("Settings loaded from persistent storage")
+                else:
+                    logger.info("No valid stored settings found, using defaults")
+                    
             else:
                 logger.info("No stored settings found, using defaults")
                 
@@ -362,39 +419,70 @@ class ChatUI:
         # Update session state
         st.session_state['settings'] = default_settings
 
-    def _save_conversation(self) -> None:
-        """Save current conversation to persistent storage."""
+    def _save_conversation_to_file(self) -> None:
+        """Save conversation to a JSON file."""
         try:
-            # Get recent messages within limit
-            messages_to_save = st.session_state.messages[-self.MAX_STORED_MESSAGES:]
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = self.history_dir / f"chat_{timestamp}.json"
             
-            # Save to query parameters
-            st.experimental_set_query_params(
-                conversation=messages_to_save
-            )
-            logger.info(f"Saved {len(messages_to_save)} messages to persistent storage")
+            data = {
+                "timestamp": timestamp,
+                "model": self.chat_interface.model_name,
+                "settings": st.session_state.settings,
+                "messages": st.session_state.messages
+            }
+            
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"Saved conversation to {filename}")
+            st.success(f"Conversation saved to {filename.name}")
+            
         except Exception as e:
-            logger.error(f"Error saving conversation: {e}")
-
-    def _load_conversation(self) -> None:
-        """Load conversation from persistent storage."""
+            logger.error(f"Error saving conversation to file: {e}")
+            st.error(f"Failed to save conversation: {str(e)}")
+    
+    def _load_conversation_from_file(self, filename: str) -> None:
+        """Load conversation from a JSON file."""
         try:
-            # Get stored conversation
-            params = st.experimental_get_query_params()
-            stored_messages = params.get('conversation', [])
+            filepath = self.history_dir / filename
+            with open(filepath, encoding='utf-8') as f:
+                data = json.load(f)
             
-            if stored_messages:
-                # Ensure we only load up to MAX_STORED_MESSAGES
-                messages_to_load = stored_messages[-self.MAX_STORED_MESSAGES:]
-                # Update session state
-                st.session_state.messages = messages_to_load
-                logger.info(f"Loaded {len(messages_to_load)} messages from persistent storage")
-            else:
-                logger.info("No stored conversation found")
+            # Load messages
+            st.session_state.messages = data["messages"]
+            
+            # Load settings if available
+            if "settings" in data:
+                st.session_state.settings.update(data["settings"])
+                # Update chat interface settings
+                self.chat_interface.model_name = data["settings"].get('model', self.chat_interface.model_name)
+                if 'api_params' in data["settings"]:
+                    params = data["settings"]['api_params']
+                    self.chat_interface.temperature = params.get('temperature', self.chat_interface.temperature)
+                    self.chat_interface.top_p = params.get('top_p', self.chat_interface.top_p)
+                    self.chat_interface.presence_penalty = params.get('presence_penalty', self.chat_interface.presence_penalty)
+                    self.chat_interface.frequency_penalty = params.get('frequency_penalty', self.chat_interface.frequency_penalty)
+            
+            logger.info(f"Loaded conversation from {filepath}")
+            st.success(f"Loaded conversation from {filename}")
+            
         except Exception as e:
-            logger.error(f"Error loading conversation: {e}")
-            st.session_state.messages = []
-
+            logger.error(f"Error loading conversation from file: {e}")
+            st.error(f"Failed to load conversation: {str(e)}")
+    
+    def _list_saved_conversations(self) -> List[Path]:
+        """List all saved conversation files.
+        
+        Returns:
+            List of paths to saved conversation files, sorted by timestamp (newest first)
+        """
+        return sorted(
+            self.history_dir.glob("chat_*.json"),
+            key=lambda x: x.stat().st_mtime,
+            reverse=True
+        )
+    
     def _enforce_message_limit(self) -> None:
         """Ensure messages don't exceed MAX_STORED_MESSAGES."""
         if len(st.session_state.messages) > self.MAX_STORED_MESSAGES:

@@ -82,3 +82,19 @@ To run the application::
     streamlit run app.py
 
 The application will start and open in your default web browser.
+
+Chat History
+-----------
+
+StreamlitChat supports saving and loading chat histories::
+
+    # Conversations are automatically saved to the chat_history directory
+    # You can manage conversations through the sidebar:
+    
+    1. Click "💾 Save Current Conversation" to save the current chat
+    2. Click on any saved conversation in the list to load it
+    
+    # Chat histories include:
+    - All messages
+    - Model settings
+    - UI preferences

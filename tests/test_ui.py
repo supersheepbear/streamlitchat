@@ -489,30 +489,36 @@ async def test_api_parameters_persistence(mock_session_state):
     assert chat_ui.chat_interface.frequency_penalty == 1.2
 
 @pytest.mark.asyncio
-async def test_conversation_persistence():
-    """Test conversation persistence between sessions."""
-    # Setup
-    chat_ui = ChatUI(ChatInterface(test_mode=True))
+async def test_conversation_persistence(tmp_path, chat_ui):
+    """Test saving and loading conversations."""
+    ui, mock_st = chat_ui
     
-    # Mock messages
-    test_messages = [
+    # Set up a temporary history directory
+    ui.history_dir = tmp_path
+    
+    # Add some test messages
+    st.session_state.messages = [
         {"role": "user", "content": "Hello"},
-        {"role": "assistant", "content": "Hi there!"},
-        {"role": "user", "content": "How are you?"},
-        {"role": "assistant", "content": "I'm doing well, thanks!"}
+        {"role": "assistant", "content": "Hi there!"}
     ]
     
-    # Set messages in session state
-    st.session_state.messages = test_messages
-    
     # Save conversation
-    chat_ui._save_conversation()
+    ui._save_conversation_to_file()
     
-    # Create new UI instance (simulating new session)
-    new_chat_ui = ChatUI(ChatInterface(test_mode=True))
+    # Verify file was created
+    saved_files = list(tmp_path.glob("chat_*.json"))
+    assert len(saved_files) == 1
+    
+    # Clear messages
+    st.session_state.messages = []
+    
+    # Load conversation
+    ui._load_conversation_from_file(saved_files[0].name)
     
     # Verify messages were restored
-    assert st.session_state.messages == test_messages
+    assert len(st.session_state.messages) == 2
+    assert st.session_state.messages[0]["content"] == "Hello"
+    assert st.session_state.messages[1]["content"] == "Hi there!"
 
 @pytest.mark.skip(reason="Pagination logic needs to be reworked")
 @pytest.mark.asyncio

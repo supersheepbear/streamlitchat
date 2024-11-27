@@ -1,1 +1,949 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" skipped="6" tests="48" time="6.479" timestamp="2024-11-27T13:49:28.733512-05:00" hostname="xiong-desktop"><testcase classname="tests.test_chat_interface" name="test_chat_interface_initialization" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_chat_interface_custom_initialization" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_chat_history_operations" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_validate_api_key" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_api_response_caching" time="0.003" /><testcase classname="tests.test_chat_interface" name="test_api_rate_limiting" time="0.003" /><testcase classname="tests.test_chat_interface" name="test_batch_processing" time="1.004" /><testcase classname="tests.test_e2e" name="test_complete_chat_flow" time="1.040" /><testcase classname="tests.test_e2e" name="test_settings_interaction" time="0.466" /><testcase classname="tests.test_e2e" name="test_error_handling_flow" time="0.570" /><testcase classname="tests.test_e2e" name="test_keyboard_shortcuts" time="0.577" /><testcase classname="tests.test_e2e" name="test_message_pagination" time="0.879" /><testcase classname="tests.test_logging" name="test_logging_configuration" time="0.001" /><testcase classname="tests.test_logging" name="test_log_rotation" time="0.966" /><testcase classname="tests.test_logging" name="test_request_id_tracking" time="0.002" /><testcase classname="tests.test_logging" name="test_custom_exceptions" time="0.001" /><testcase classname="tests.test_performance" name="test_message_rendering_speed" time="0.021" /><testcase classname="tests.test_performance" name="test_memory_usage" time="0.018" /><testcase classname="tests.test_performance" name="test_api_response_time" time="0.018" /><testcase classname="tests.test_performance" name="test_concurrent_requests" time="0.020" /><testcase classname="tests.test_streamlitchat" name="test_content" time="0.001" /><testcase classname="tests.test_ui" name="test_chat_ui_initialization" time="0.017" /><testcase classname="tests.test_ui" name="test_chat_ui_session_state_initialization" time="0.016" /><testcase classname="tests.test_ui" name="test_message_display" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:103: Mock setup needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_user_input_handling" time="0.021" /><testcase classname="tests.test_ui" name="test_error_handling" time="0.023" /><testcase classname="tests.test_ui" name="test_sidebar_rendering" time="0.016" /><testcase classname="tests.test_ui" name="test_keyboard_shortcuts" time="0.052" /><testcase classname="tests.test_ui" name="test_keyboard_shortcut_while_processing" time="0.049" /><testcase classname="tests.test_ui" name="test_keyboard_shortcut_ctrl_l" time="0.086" /><testcase classname="tests.test_ui" name="test_keyboard_shortcuts_setup" time="0.060" /><testcase classname="tests.test_ui" name="test_api_parameters_persistence" time="0.020" /><testcase classname="tests.test_ui" name="test_settings_persistence_save" time="0.053" /><testcase classname="tests.test_ui" name="test_settings_persistence_load" time="0.058" /><testcase classname="tests.test_ui" name="test_settings_persistence_default" time="0.056" /><testcase classname="tests.test_ui" name="test_temperature_setting" time="0.016" /><testcase classname="tests.test_ui" name="test_top_p_setting" time="0.017" /><testcase classname="tests.test_ui" name="test_conversation_persistence" time="0.038" /><testcase classname="tests.test_ui" name="test_conversation_persistence_with_max_messages" time="0.000"><skipped type="pytest.skip" message="Pagination logic needs to be reworked">g:\streamlitchat\tests\test_ui.py:517: Pagination logic needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_theme_customization" time="0.061" /><testcase classname="tests.test_ui" name="test_theme_affects_styling" time="0.017" /><testcase classname="tests.test_ui" name="test_message_pagination" time="0.000"><skipped type="pytest.skip" message="Pagination logic needs to be reworked">g:\streamlitchat\tests\test_ui.py:574: Pagination logic needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_pagination_controls" time="0.017" /><testcase classname="tests.test_ui" name="test_efficient_message_rendering" time="0.018" /><testcase classname="tests.test_ui" name="test_message_rendering_performance" time="0.022" /><testcase classname="tests.test_ui" name="test_code_block_highlighting" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:711: Mock setup needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_code_block_language_detection" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:737: Mock setup needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_code_block_error_handling" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:761: Mock setup needs to be reworked</skipped></testcase></testsuite></testsuites>
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="6" failures="18" skipped="6" tests="50" time="7.020" timestamp="2024-11-27T14:16:14.999136-05:00" hostname="xiong-desktop"><testcase classname="tests.test_chat_interface" name="test_chat_interface_initialization" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_chat_interface_custom_initialization" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_chat_history_operations" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_validate_api_key" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_api_response_caching" time="0.004" /><testcase classname="tests.test_chat_interface" name="test_api_rate_limiting" time="0.002" /><testcase classname="tests.test_chat_interface" name="test_batch_processing" time="1.016" /><testcase classname="tests.test_e2e" name="test_complete_chat_flow" time="1.073" /><testcase classname="tests.test_e2e" name="test_settings_interaction" time="0.464" /><testcase classname="tests.test_e2e" name="test_error_handling_flow" time="0.571" /><testcase classname="tests.test_e2e" name="test_keyboard_shortcuts" time="0.599" /><testcase classname="tests.test_e2e" name="test_message_pagination" time="0.898" /><testcase classname="tests.test_examples" name="test_basic_chat_initialization" time="0.024"><failure message="AssertionError: assert 'StreamlitChat Basic Example' in 'StreamlitChat'&#10; +  where 'StreamlitChat' = Title(tag='h1').value">basic_chat_test = AppTest(
+    _script_path='examples/basic_chat.py',
+    default_timeout=3,
+    session_state={$$STREAMLIT_INTERNAL_KEY...SpecialBlock(
+            type='sidebar'
+        ),
+        2: SpecialBlock(
+            type='event'
+        )
+    }
+)
+
+    def test_basic_chat_initialization(basic_chat_test):
+        """Test basic chat example initialization."""
+        # Verify title
+        assert len(basic_chat_test.title) &gt; 0
+&gt;       assert "StreamlitChat Basic Example" in basic_chat_test.title[0].value
+E       AssertionError: assert 'StreamlitChat Basic Example' in 'StreamlitChat'
+E        +  where 'StreamlitChat' = Title(tag='h1').value
+
+tests\test_examples.py:26: AssertionError</failure></testcase><testcase classname="tests.test_examples" name="test_basic_chat_interaction" time="0.019"><failure message="IndexError: list index out of range">basic_chat_test = AppTest(
+    _script_path='examples/basic_chat.py',
+    default_timeout=3,
+    session_state={$$STREAMLIT_INTERNAL_KEY...SpecialBlock(
+            type='sidebar'
+        ),
+        2: SpecialBlock(
+            type='event'
+        )
+    }
+)
+
+    def test_basic_chat_interaction(basic_chat_test):
+        """Test basic chat interaction."""
+        # Send a test message
+&gt;       basic_chat_test.chat_input[0].set_value("Hello")
+
+tests\test_examples.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = WidgetList(), idx = 0
+
+    def __getitem__(self, idx: int | slice) -&gt; El_co | ElementList[El_co]:
+        if isinstance(idx, slice):
+            return ElementList(self._list[idx])
+        else:
+&gt;           return self._list[idx]
+E           IndexError: list index out of range
+
+.venv\Lib\site-packages\streamlit\testing\v1\element_tree.py:228: IndexError</failure></testcase><testcase classname="tests.test_logging" name="test_logging_configuration" time="0.001" /><testcase classname="tests.test_logging" name="test_log_rotation" time="0.973" /><testcase classname="tests.test_logging" name="test_request_id_tracking" time="0.003" /><testcase classname="tests.test_logging" name="test_custom_exceptions" time="0.000" /><testcase classname="tests.test_performance" name="test_message_rendering_speed" time="0.019"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.performance
+    async def test_message_rendering_speed():
+        """Test message rendering performance."""
+        with patch('streamlit.session_state') as mock_state:
+            # Setup test data
+            mock_state.messages = [
+                {"role": "user" if i % 2 == 0 else "assistant",
+                 "content": f"Test message {i}"}
+                for i in range(1000)  # Test with 1000 messages
+            ]
+            mock_state.is_processing = False
+    
+&gt;           chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_performance.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0A4E3F0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0A4E270&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_performance" name="test_memory_usage" time="0.016"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.performance
+    async def test_memory_usage():
+        """Test memory usage during chat operations."""
+        with patch('streamlit.session_state') as mock_state:
+            process = psutil.Process()
+            initial_memory = process.memory_info().rss
+    
+            # Setup chat with large history
+            mock_state.messages = [
+                {"role": "user" if i % 2 == 0 else "assistant",
+                 "content": f"Test message {i} " * 100}  # Large messages
+                for i in range(100)
+            ]
+            mock_state.is_processing = False
+    
+&gt;           chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_performance.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0A6F2C0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0A6F170&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_performance" name="test_api_response_time" time="0.017"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.performance
+    async def test_api_response_time():
+        """Test API response time."""
+        with patch('streamlit.session_state') as mock_state:
+            mock_state.messages = []
+            mock_state.is_processing = False
+    
+            chat_interface = ChatInterface(test_mode=True)
+&gt;           chat_ui = ChatUI(chat_interface)
+
+tests\test_performance.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E09942C0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0995670&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_performance" name="test_concurrent_requests" time="0.016"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.performance
+    async def test_concurrent_requests():
+        """Test handling of concurrent requests."""
+        with patch('streamlit.session_state') as mock_state:
+            mock_state.messages = []
+            mock_state.is_processing = False
+    
+            chat_interface = ChatInterface(test_mode=True)
+&gt;           chat_ui = ChatUI(chat_interface)
+
+tests\test_performance.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E09947A0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E09AF5C0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_streamlitchat" name="test_content" time="0.001" /><testcase classname="tests.test_ui" name="test_chat_ui_initialization" time="0.015"><error message="failed on setup with &quot;AttributeError: 'ChatUI' object has no attribute '_load_conversation'&quot;">@pytest.fixture
+    def chat_ui():
+        """Fixture to create a ChatUI instance with mocked Streamlit."""
+        mock_st = MagicMock()
+    
+        # Mock sidebar as a context manager
+        sidebar = MagicMock()
+        mock_st.sidebar = MagicMock()
+        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+        mock_st.sidebar.__exit__ = MagicMock()
+    
+        # Create a ChatInterface in test mode
+        chat_interface = ChatInterface(test_mode=True)
+    
+        with patch('streamlitchat.ui.st', mock_st):
+&gt;           ui = ChatUI(chat_interface)
+
+tests\test_ui.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E091CB30&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0A6C4D0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</error></testcase><testcase classname="tests.test_ui" name="test_chat_ui_session_state_initialization" time="0.014"><error message="failed on setup with &quot;AttributeError: 'ChatUI' object has no attribute '_load_conversation'&quot;">@pytest.fixture
+    def chat_ui():
+        """Fixture to create a ChatUI instance with mocked Streamlit."""
+        mock_st = MagicMock()
+    
+        # Mock sidebar as a context manager
+        sidebar = MagicMock()
+        mock_st.sidebar = MagicMock()
+        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+        mock_st.sidebar.__exit__ = MagicMock()
+    
+        # Create a ChatInterface in test mode
+        chat_interface = ChatInterface(test_mode=True)
+    
+        with patch('streamlitchat.ui.st', mock_st):
+&gt;           ui = ChatUI(chat_interface)
+
+tests\test_ui.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0A6EF30&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0997B00&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</error></testcase><testcase classname="tests.test_ui" name="test_message_display" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:103: Mock setup needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_user_input_handling" time="0.014"><error message="failed on setup with &quot;AttributeError: 'ChatUI' object has no attribute '_load_conversation'&quot;">@pytest.fixture
+    def chat_ui():
+        """Fixture to create a ChatUI instance with mocked Streamlit."""
+        mock_st = MagicMock()
+    
+        # Mock sidebar as a context manager
+        sidebar = MagicMock()
+        mock_st.sidebar = MagicMock()
+        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+        mock_st.sidebar.__exit__ = MagicMock()
+    
+        # Create a ChatInterface in test mode
+        chat_interface = ChatInterface(test_mode=True)
+    
+        with patch('streamlitchat.ui.st', mock_st):
+&gt;           ui = ChatUI(chat_interface)
+
+tests\test_ui.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0CE5400&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0994B60&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</error></testcase><testcase classname="tests.test_ui" name="test_error_handling" time="0.013"><error message="failed on setup with &quot;AttributeError: 'ChatUI' object has no attribute '_load_conversation'&quot;">@pytest.fixture
+    def chat_ui():
+        """Fixture to create a ChatUI instance with mocked Streamlit."""
+        mock_st = MagicMock()
+    
+        # Mock sidebar as a context manager
+        sidebar = MagicMock()
+        mock_st.sidebar = MagicMock()
+        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+        mock_st.sidebar.__exit__ = MagicMock()
+    
+        # Create a ChatInterface in test mode
+        chat_interface = ChatInterface(test_mode=True)
+    
+        with patch('streamlitchat.ui.st', mock_st):
+&gt;           ui = ChatUI(chat_interface)
+
+tests\test_ui.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0CE0C50&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0CDA780&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</error></testcase><testcase classname="tests.test_ui" name="test_sidebar_rendering" time="0.014"><error message="failed on setup with &quot;AttributeError: 'ChatUI' object has no attribute '_load_conversation'&quot;">@pytest.fixture
+    def chat_ui():
+        """Fixture to create a ChatUI instance with mocked Streamlit."""
+        mock_st = MagicMock()
+    
+        # Mock sidebar as a context manager
+        sidebar = MagicMock()
+        mock_st.sidebar = MagicMock()
+        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+        mock_st.sidebar.__exit__ = MagicMock()
+    
+        # Create a ChatInterface in test mode
+        chat_interface = ChatInterface(test_mode=True)
+    
+        with patch('streamlitchat.ui.st', mock_st):
+&gt;           ui = ChatUI(chat_interface)
+
+tests\test_ui.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0995C70&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0CC9730&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</error></testcase><testcase classname="tests.test_ui" name="test_keyboard_shortcuts" time="0.059"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1957981701328'&gt;
+
+    @pytest.mark.asyncio
+    async def test_keyboard_shortcuts(mock_st):
+        """Test keyboard shortcuts functionality."""
+        # Setup
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:187: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0B229C0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0966F30&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_keyboard_shortcut_while_processing" time="0.086"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1957980020592'&gt;
+
+    @pytest.mark.asyncio
+    async def test_keyboard_shortcut_while_processing(mock_st):
+        """Test keyboard shortcuts are disabled while processing."""
+        # Setup
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:214: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0CB42C0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0B22750&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_keyboard_shortcut_ctrl_l" time="0.057"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1957977594992'&gt;
+
+    @pytest.mark.asyncio
+    async def test_keyboard_shortcut_ctrl_l(mock_st):
+        """Test Ctrl+L shortcut to clear chat."""
+        # Setup
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0EE9E20&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0CDA3C0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_keyboard_shortcuts_setup" time="0.054"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1957984145904'&gt;
+
+    @pytest.mark.asyncio
+    async def test_keyboard_shortcuts_setup(mock_st):
+        """Test keyboard shortcuts setup."""
+        # Setup
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:252: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0FB51C0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0EE9A60&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_api_parameters_persistence" time="0.016" /><testcase classname="tests.test_ui" name="test_settings_persistence_save" time="0.055"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1958002184880'&gt;
+
+    @pytest.mark.asyncio
+    async def test_settings_persistence_save(mock_st):
+        """Test saving settings to persistent storage."""
+        # Setup
+        chat_interface = ChatInterface(test_mode=True)
+&gt;       chat_ui = ChatUI(chat_interface)
+
+tests\test_ui.py:302: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E2197CE0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E20663C0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_settings_persistence_load" time="0.056"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1958003618736'&gt;
+
+    @pytest.mark.asyncio
+    async def test_settings_persistence_load(mock_st):
+        """Test loading settings from persistent storage."""
+        # Setup
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:339: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E225B050&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E21C3230&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_settings_persistence_default" time="0.059"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1958005302880'&gt;
+
+    @pytest.mark.asyncio
+    async def test_settings_persistence_default(mock_st):
+        """Test default settings when no stored settings exist."""
+        # Setup
+        chat_interface = ChatInterface(test_mode=True)
+&gt;       chat_ui = ChatUI(chat_interface)
+
+tests\test_ui.py:365: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E24AA3C0&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E235E300&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_temperature_setting" time="0.018" /><testcase classname="tests.test_ui" name="test_top_p_setting" time="0.017" /><testcase classname="tests.test_ui" name="test_conversation_persistence" time="0.067"><error message="failed on setup with &quot;AttributeError: 'ChatUI' object has no attribute '_load_conversation'&quot;">@pytest.fixture
+    def chat_ui():
+        """Fixture to create a ChatUI instance with mocked Streamlit."""
+        mock_st = MagicMock()
+    
+        # Mock sidebar as a context manager
+        sidebar = MagicMock()
+        mock_st.sidebar = MagicMock()
+        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+        mock_st.sidebar.__exit__ = MagicMock()
+    
+        # Create a ChatInterface in test mode
+        chat_interface = ChatInterface(test_mode=True)
+    
+        with patch('streamlitchat.ui.st', mock_st):
+&gt;           ui = ChatUI(chat_interface)
+
+tests\test_ui.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E2501190&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E24D33B0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</error></testcase><testcase classname="tests.test_ui" name="test_conversation_persistence_with_max_messages" time="0.000"><skipped type="pytest.skip" message="Pagination logic needs to be reworked">g:\streamlitchat\tests\test_ui.py:523: Pagination logic needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_theme_customization" time="0.062"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">mock_st = &lt;NonCallableMagicMock name='st' spec='module' id='1958006790368'&gt;
+
+    @pytest.mark.asyncio
+    async def test_theme_customization(mock_st):
+        """Test theme customization functionality."""
+        # Setup
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:555: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0C76390&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E24D39B0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_theme_affects_styling" time="0.027"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.asyncio
+    async def test_theme_affects_styling():
+        """Test that theme changes affect UI styling."""
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:568: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0CE7920&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0CE6D20&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_message_pagination" time="0.000"><skipped type="pytest.skip" message="Pagination logic needs to be reworked">g:\streamlitchat\tests\test_ui.py:580: Pagination logic needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_pagination_controls" time="0.016"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.asyncio
+    async def test_pagination_controls():
+        """Test pagination control functionality."""
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:623: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0D20140&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0D23AD0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_efficient_message_rendering" time="0.014"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.asyncio
+    async def test_efficient_message_rendering():
+        """Test efficient message rendering with virtualization."""
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:656: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0D20080&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0D233E0&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_message_rendering_performance" time="0.019"><failure message="AttributeError: 'ChatUI' object has no attribute '_load_conversation'">@pytest.mark.asyncio
+    async def test_message_rendering_performance():
+        """Test message rendering performance metrics."""
+&gt;       chat_ui = ChatUI(ChatInterface(test_mode=True))
+
+tests\test_ui.py:686: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;streamlitchat.ui.ChatUI object at 0x000001C7E0D23860&gt;, chat_interface = &lt;streamlitchat.chat_interface.ChatInterface object at 0x000001C7E0D23530&gt;, test_mode = False
+
+    def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -&gt; None:
+        """Initialize the ChatUI.
+    
+        Args:
+            chat_interface: Optional ChatInterface instance. If not provided,
+                          a new instance will be created.
+            test_mode: If True, enables test mode which skips actual UI rendering.
+        """
+        self.chat_interface = chat_interface or ChatInterface()
+        self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
+    
+        # Initialize history directory
+        self.history_dir = Path("chat_history")
+        self.history_dir.mkdir(exist_ok=True)
+    
+        self._initialize_session_state()
+        if not test_mode:
+            self._setup_page()
+            self._setup_keyboard_shortcuts()
+&gt;           self._load_conversation()  # Load persisted conversation
+E           AttributeError: 'ChatUI' object has no attribute '_load_conversation'
+
+src\streamlitchat\ui.py:54: AttributeError</failure></testcase><testcase classname="tests.test_ui" name="test_code_block_highlighting" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:717: Mock setup needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_code_block_language_detection" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:743: Mock setup needs to be reworked</skipped></testcase><testcase classname="tests.test_ui" name="test_code_block_error_handling" time="0.000"><skipped type="pytest.skip" message="Mock setup needs to be reworked">g:\streamlitchat\tests\test_ui.py:767: Mock setup needs to be reworked</skipped></testcase></testsuite></testsuites>
