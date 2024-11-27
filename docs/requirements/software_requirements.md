@@ -29,7 +29,7 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 
 ### 4. Message History and Context [🟡]
 - [x] Implement chat history storage
-- [ ] Add conversation persistence between sessions
+- [x] Add conversation persistence between sessions
 - [x] Implement context window management
 - [x] Add conversation clear functionality
 - [x] Add export conversation feature
@@ -40,7 +40,7 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 - [x] Implement code syntax highlighting
 - [x] Add copy message functionality
 - [x] Implement auto-scroll to latest message
-- [ ] Add keyboard shortcuts (Enter to send, etc.)
+- [x] Add keyboard shortcuts (Enter to send, etc.)
 - [ ] Implement responsive design
 
 ### 6. Settings and Configuration [🟡]
@@ -48,8 +48,8 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 - [x] Add API endpoint configuration
 - [x] Implement model selection
 - [x] Add temperature and other API parameters configuration
-- [ ] Implement settings persistence
-- [ ] Add theme customization options
+- [x] Implement settings persistence
+- [x] Add theme customization options
 
 ### 7. Security Features [✓]
 - [x] Implement secure API key storage

@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 class ChatUI:
     """Main UI class for the Streamlit chat interface."""
 
+    MAX_STORED_MESSAGES = 50  # Maximum number of messages to persist and load between sessions
+    VALID_THEMES = {'light', 'dark'}  # Valid theme options
+
     def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -> None:
         """Initialize the ChatUI.
 
@@ -29,6 +32,7 @@ class ChatUI:
         if not test_mode:
             self._setup_page()
             self._setup_keyboard_shortcuts()
+            self._load_conversation()  # Load persisted conversation
 
     def _initialize_session_state(self) -> None:
         """Initialize Streamlit session state variables."""
@@ -50,8 +54,13 @@ class ChatUI:
                 'theme': 'light'
             }
         
-        # Load any persisted settings
+        # Load any persisted settings before applying theme
         self._load_settings()
+        
+        # Apply current theme
+        current_theme = st.session_state.settings.get('theme', 'light')
+        if current_theme in self.VALID_THEMES:
+            self._update_theme(current_theme)
 
     def _setup_page(self) -> None:
         """Configure the Streamlit page settings."""
@@ -88,6 +97,9 @@ class ChatUI:
             # Add user message to chat
             user_message = {"role": "user", "content": prompt}
             st.session_state.messages.append(user_message)
+            # Enforce message limit
+            if len(st.session_state.messages) > self.MAX_STORED_MESSAGES:
+                st.session_state.messages = st.session_state.messages[-self.MAX_STORED_MESSAGES:]
             self._display_message(user_message)
 
             try:
@@ -104,12 +116,17 @@ class ChatUI:
                 # Add final response to chat history
                 assistant_message = {"role": "assistant", "content": full_response}
                 st.session_state.messages.append(assistant_message)
+                # Enforce message limit again after adding assistant response
+                if len(st.session_state.messages) > self.MAX_STORED_MESSAGES:
+                    st.session_state.messages = st.session_state.messages[-self.MAX_STORED_MESSAGES:]
 
             except Exception as e:
                 st.error(f"Error: {str(e)}")
             
             finally:
                 st.session_state.is_processing = False
+                # Save conversation after each message
+                self._save_conversation()
 
     def _render_sidebar(self) -> Dict[str, Any]:
         """Render the sidebar with settings and controls.
@@ -158,8 +175,16 @@ class ChatUI:
             settings['top_p'] = top_p
 
             if not self.test_mode:
-                # Rest of the sidebar UI...
-                pass
+                # Theme Selection
+                st.subheader("Theme")
+                current_theme = st.session_state.settings.get('theme', 'light')
+                theme = st.selectbox(
+                    "Select Theme",
+                    options=list(self.VALID_THEMES),
+                    index=list(self.VALID_THEMES).index(current_theme)
+                )
+                if theme != current_theme:
+                    self._update_theme(theme)
 
         return settings
 
@@ -202,24 +227,27 @@ class ChatUI:
 
     def _save_settings(self) -> None:
         """Save current settings to persistent storage."""
-        # Get current settings from chat interface
-        current_settings = {
-            'model': self.chat_interface.model_name,
-            'api_params': {
-                'temperature': self.chat_interface.temperature,
-                'top_p': self.chat_interface.top_p,
-                'presence_penalty': self.chat_interface.presence_penalty,
-                'frequency_penalty': self.chat_interface.frequency_penalty
-            },
-            'theme': st.session_state.settings.get('theme', 'light')
-        }
-        
-        # Update session state
-        st.session_state.settings = current_settings
-        
-        # Save to URL parameters for persistence
-        st.experimental_set_query_params(settings=current_settings)
-        logger.info("Settings saved to persistent storage")
+        try:
+            # Get current settings from chat interface
+            current_settings = {
+                'model': self.chat_interface.model_name,
+                'api_params': {
+                    'temperature': self.chat_interface.temperature,
+                    'top_p': self.chat_interface.top_p,
+                    'presence_penalty': self.chat_interface.presence_penalty,
+                    'frequency_penalty': self.chat_interface.frequency_penalty
+                },
+                'theme': st.session_state.settings.get('theme', 'light')
+            }
+            
+            # Update session state
+            st.session_state.settings = current_settings
+            
+            # Save to URL parameters for persistence
+            st.experimental_set_query_params(settings=current_settings)
+            logger.info("Settings saved to persistent storage")
+        except Exception as e:
+            logger.error(f"Error saving settings: {e}")
 
     def _load_settings(self) -> None:
         """Load settings from persistent storage."""
@@ -239,6 +267,12 @@ class ChatUI:
                 
                 # Update session state
                 st.session_state.settings = stored_settings
+                
+                # Apply theme if it exists
+                theme = stored_settings.get('theme', 'light')
+                if theme in self.VALID_THEMES:
+                    self._update_theme(theme, save_settings=False)  # Avoid recursive save
+                
                 logger.info("Settings loaded from persistent storage")
             except (KeyError, TypeError) as e:
                 logger.warning(f"Error loading settings: {e}. Using defaults.")
@@ -269,3 +303,114 @@ class ChatUI:
         
         # Update session state
         st.session_state['settings'] = default_settings
+
+    def _save_conversation(self) -> None:
+        """Save current conversation to persistent storage."""
+        try:
+            # Get recent messages within limit
+            messages_to_save = st.session_state.messages[-self.MAX_STORED_MESSAGES:]
+            
+            # Save to query parameters
+            st.experimental_set_query_params(
+                conversation=messages_to_save
+            )
+            logger.info(f"Saved {len(messages_to_save)} messages to persistent storage")
+        except Exception as e:
+            logger.error(f"Error saving conversation: {e}")
+
+    def _load_conversation(self) -> None:
+        """Load conversation from persistent storage."""
+        try:
+            # Get stored conversation
+            params = st.experimental_get_query_params()
+            stored_messages = params.get('conversation', [])
+            
+            if stored_messages:
+                # Ensure we only load up to MAX_STORED_MESSAGES
+                messages_to_load = stored_messages[-self.MAX_STORED_MESSAGES:]
+                # Update session state
+                st.session_state.messages = messages_to_load
+                logger.info(f"Loaded {len(messages_to_load)} messages from persistent storage")
+            else:
+                logger.info("No stored conversation found")
+        except Exception as e:
+            logger.error(f"Error loading conversation: {e}")
+            st.session_state.messages = []
+
+    def _enforce_message_limit(self) -> None:
+        """Ensure messages don't exceed MAX_STORED_MESSAGES."""
+        if len(st.session_state.messages) > self.MAX_STORED_MESSAGES:
+            st.session_state.messages = st.session_state.messages[-self.MAX_STORED_MESSAGES:]
+            logger.debug(f"Trimmed messages to {self.MAX_STORED_MESSAGES} most recent")
+
+    def _get_theme_styles(self, theme: str) -> Dict[str, str]:
+        """Get CSS styles for the specified theme.
+        
+        Args:
+            theme: Theme name ('light' or 'dark')
+            
+        Returns:
+            Dict[str, str]: Theme style definitions
+            
+        Raises:
+            ValueError: If theme is invalid
+        """
+        if theme not in self.VALID_THEMES:
+            raise ValueError(f"Invalid theme: {theme}. Must be one of {self.VALID_THEMES}")
+            
+        themes = {
+            'light': {
+                'background_color': '#ffffff',
+                'text_color': '#000000',
+                'sidebar_bg': '#f8f9fa',
+                'input_bg': '#f0f2f6',
+                'border_color': '#e6e6e6'
+            },
+            'dark': {
+                'background_color': '#1E1E1E',
+                'text_color': '#ffffff',
+                'sidebar_bg': '#262626',
+                'input_bg': '#2d2d2d',
+                'border_color': '#404040'
+            }
+        }
+        return themes[theme]
+    
+    def _update_theme(self, theme: str, save_settings: bool = True) -> None:
+        """Update the UI theme.
+        
+        Args:
+            theme: Theme name ('light' or 'dark')
+            save_settings: Whether to save settings after updating theme
+            
+        Raises:
+            ValueError: If theme is invalid
+        """
+        if theme not in self.VALID_THEMES:
+            raise ValueError(f"Invalid theme: {theme}. Must be one of {self.VALID_THEMES}")
+            
+        st.session_state.settings['theme'] = theme
+        styles = self._get_theme_styles(theme)
+        
+        # Apply theme using custom CSS
+        css = f"""
+        <style>
+            .stApp {{
+                background-color: {styles['background_color']};
+                color: {styles['text_color']};
+            }}
+            .stSidebar {{
+                background-color: {styles['sidebar_bg']};
+            }}
+            .stTextInput {{
+                background-color: {styles['input_bg']};
+                border-color: {styles['border_color']};
+            }}
+        </style>
+        """
+        st.markdown(css, unsafe_allow_html=True)
+        logger.info(f"Updated theme to: {theme}")
+        
+        # Save settings to persist theme
+        if save_settings:
+            self._save_settings()
