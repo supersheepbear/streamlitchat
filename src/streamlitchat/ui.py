@@ -49,14 +49,16 @@ class ChatUI:
             st.session_state.is_processing = False
         if "keyboard_trigger" not in st.session_state:
             st.session_state.keyboard_trigger = None
+        if "current_page" not in st.session_state:
+            st.session_state.current_page = 0
         if "settings" not in st.session_state:
             st.session_state.settings = {
-                'model': 'gpt-3.5-turbo',
+                'model': self.chat_interface.model_name,
                 'api_params': {
-                    'temperature': 0.7,
-                    'top_p': 0.9,
-                    'presence_penalty': 0.0,
-                    'frequency_penalty': 0.0
+                    'temperature': self.chat_interface.temperature,
+                    'top_p': self.chat_interface.top_p,
+                    'presence_penalty': self.chat_interface.presence_penalty,
+                    'frequency_penalty': self.chat_interface.frequency_penalty
                 },
                 'theme': 'light'
             }
@@ -97,117 +99,120 @@ class ChatUI:
         for message in messages:
             self._display_message(message)
         
-        # Add pagination controls if more than one page
-        total_pages = self._get_total_pages()
+        # Add pagination controls if needed
+        total_pages = max(1, len(st.session_state.messages) // self.MESSAGES_PER_PAGE)
         if total_pages > 1:
-            col1, col2, col3 = st.columns([1, 3, 1])
-            with col1:
-                if st.button("← Previous") and self.current_page > 0:
-                    self._prev_page()
-            with col2:
-                st.write(f"Page {self.current_page + 1} of {total_pages}")
-            with col3:
-                if st.button("Next →") and self.current_page < total_pages - 1:
-                    self._next_page()
+            cols = st.columns(3)
+            with cols[0]:
+                if st.button("← Previous", key="prev_btn") and st.session_state.current_page > 0:
+                    st.session_state.current_page -= 1
+            with cols[1]:
+                st.write(f"Page {st.session_state.current_page + 1} of {total_pages}")
+            with cols[2]:
+                if st.button("Next →", key="next_btn") and st.session_state.current_page < total_pages - 1:
+                    st.session_state.current_page += 1
 
     async def _handle_user_input(self) -> None:
         """Handle user input and generate AI response."""
-        if prompt := st.chat_input("Type your message here..."):
+        if prompt := st.chat_input("Type your message here...", key="main_chat_input"):
             st.session_state.is_processing = True
+            response_placeholder = st.empty()  # Create placeholder for response
             
-            # Add user message to chat
-            user_message = {"role": "user", "content": prompt}
-            st.session_state.messages.append(user_message)
-            # Enforce message limit
-            if len(st.session_state.messages) > self.MAX_STORED_MESSAGES:
-                st.session_state.messages = st.session_state.messages[-self.MAX_STORED_MESSAGES:]
-            self._display_message(user_message)
-
             try:
-                # Get AI response with streaming
-                response_placeholder = st.empty()
-                full_response = ""
+                # Add user message
+                user_message = {"role": "user", "content": prompt}
+                if "messages" not in st.session_state:
+                    st.session_state.messages = []
+                st.session_state.messages.append(user_message)
+                self._display_message(user_message)
 
+                # Get AI response
+                full_response = ""
                 async for chunk in self.chat_interface.send_message_stream(prompt):
                     full_response += chunk
-                    # Update response in real-time
-                    with st.chat_message("assistant"):
-                        response_placeholder.markdown(full_response + "▌")
-
-                # Add final response to chat history
+                    with response_placeholder.container():  # Use placeholder
+                        st.chat_message("assistant").write(full_response)
+                
+                # Add assistant message to history
                 assistant_message = {"role": "assistant", "content": full_response}
                 st.session_state.messages.append(assistant_message)
-                # Enforce message limit again after adding assistant response
-                if len(st.session_state.messages) > self.MAX_STORED_MESSAGES:
-                    st.session_state.messages = st.session_state.messages[-self.MAX_STORED_MESSAGES:]
-
+                
+                # Force UI update
+                st.rerun()
+                
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                logger.error(f"Error processing message: {e}", exc_info=True)
+                st.error(str(e))
+                with st.chat_message("assistant"):
+                    st.error(f"Error: {str(e)}")
             
             finally:
                 st.session_state.is_processing = False
-                # Save conversation after each message
-                self._save_conversation()
 
     def _render_sidebar(self) -> Dict[str, Any]:
-        """Render the sidebar with settings and controls.
-        
-        Returns:
-            Dict[str, Any]: Current settings values (useful for testing)
-        """
-        settings = {
-            'temperature': st.session_state.settings['api_params']['temperature'],
-            'top_p': st.session_state.settings['api_params']['top_p'],
-            'presence_penalty': st.session_state.settings['api_params']['presence_penalty'],
-            'frequency_penalty': st.session_state.settings['api_params']['frequency_penalty']
-        }
-        
-        # Update chat interface with current settings
-        self.chat_interface.temperature = settings['temperature']
-        self.chat_interface.top_p = settings['top_p']
-        self.chat_interface.presence_penalty = settings['presence_penalty']
-        self.chat_interface.frequency_penalty = settings['frequency_penalty']
-
-        # Always render sliders but skip other UI elements in test mode
+        """Render the sidebar with settings and controls."""
         with st.sidebar:
-            # API Parameters
-            st.subheader("API Parameters")
+            st.subheader("Settings")
             
-            # Temperature
+            # Temperature slider
             temperature = st.slider(
                 "Temperature",
                 min_value=0.0,
                 max_value=2.0,
-                value=settings['temperature'],
+                value=st.session_state.settings['api_params']['temperature'],
                 help="Controls randomness in responses"
             )
+            st.session_state.settings['api_params']['temperature'] = temperature
             self.chat_interface.temperature = temperature
-            settings['temperature'] = temperature
             
-            # Top P
+            # Top P slider
             top_p = st.slider(
                 "Top P",
                 min_value=0.0,
                 max_value=1.0,
-                value=settings['top_p'],
+                value=st.session_state.settings['api_params']['top_p'],
                 help="Controls diversity via nucleus sampling"
             )
+            st.session_state.settings['api_params']['top_p'] = top_p
             self.chat_interface.top_p = top_p
-            settings['top_p'] = top_p
-
-            if not self.test_mode:
-                # Theme Selection
-                st.subheader("Theme")
-                current_theme = st.session_state.settings.get('theme', 'light')
-                theme = st.selectbox(
-                    "Select Theme",
-                    options=list(self.VALID_THEMES),
-                    index=list(self.VALID_THEMES).index(current_theme)
-                )
-                if theme != current_theme:
-                    self._update_theme(theme)
-
-        return settings
+            
+            # Presence Penalty slider
+            presence_penalty = st.slider(
+                "Presence Penalty",
+                min_value=0.0,
+                max_value=2.0,
+                value=st.session_state.settings['api_params']['presence_penalty'],
+                help="Controls repetition penalty"
+            )
+            st.session_state.settings['api_params']['presence_penalty'] = presence_penalty
+            self.chat_interface.presence_penalty = presence_penalty
+            
+            # Frequency Penalty slider
+            frequency_penalty = st.slider(
+                "Frequency Penalty",
+                min_value=0.0,
+                max_value=2.0,
+                value=st.session_state.settings['api_params']['frequency_penalty'],
+                help="Controls token frequency penalty"
+            )
+            st.session_state.settings['api_params']['frequency_penalty'] = frequency_penalty
+            self.chat_interface.frequency_penalty = frequency_penalty
+            
+            # Theme selector
+            theme = st.selectbox(
+                "Select Theme",
+                options=['light', 'dark'],
+                index=0 if st.session_state.settings['theme'] == 'light' else 1
+            )
+            st.session_state.settings['theme'] = theme
+            
+            return {
+                'temperature': temperature,
+                'top_p': top_p,
+                'presence_penalty': presence_penalty,
+                'frequency_penalty': frequency_penalty,
+                'theme': theme
+            }
 
     def _setup_keyboard_shortcuts(self) -> None:
         """Setup keyboard shortcuts using Streamlit components."""
@@ -229,12 +234,14 @@ class ChatUI:
     async def _handle_keyboard_shortcuts(self) -> None:
         """Handle keyboard shortcut events."""
         if st.session_state.keyboard_trigger == 'enter' and not st.session_state.is_processing:
-            await self._handle_user_input()
-            logger.debug("Enter key pressed - handling message input")
+            if prompt := st.chat_input("Type your message here...", key=f"chat_input_{time.time()}"):
+                if "messages" not in st.session_state:
+                    st.session_state.messages = []
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                await self._handle_user_input()
         elif st.session_state.keyboard_trigger == 'ctrl+l':
-            self.chat_interface.clear_history()
             st.session_state.messages = []
-            logger.info("Chat cleared via Ctrl+L shortcut")
+            self.chat_interface.clear_history()
         
         # Reset keyboard trigger
         st.session_state.keyboard_trigger = None
@@ -272,35 +279,29 @@ class ChatUI:
 
     def _load_settings(self) -> None:
         """Load settings from persistent storage."""
-        # Try to load settings from URL parameters
-        params = st.experimental_get_query_params()
-        stored_settings = params.get('settings', None)
-        
-        if stored_settings:
-            try:
-                # Update chat interface with stored settings
-                self.chat_interface.model_name = stored_settings['model']
-                api_params = stored_settings['api_params']
-                self.chat_interface.temperature = api_params['temperature']
-                self.chat_interface.top_p = api_params['top_p']
-                self.chat_interface.presence_penalty = api_params['presence_penalty']
-                self.chat_interface.frequency_penalty = api_params['frequency_penalty']
+        try:
+            params = st.experimental_get_query_params()
+            stored_settings = params.get('settings', [None])[0]
+            
+            if stored_settings and isinstance(stored_settings, dict):
+                # Update chat interface settings
+                if 'model' in stored_settings:
+                    self.chat_interface.model_name = stored_settings['model']
+                if 'api_params' in stored_settings:
+                    params = stored_settings['api_params']
+                    self.chat_interface.temperature = params.get('temperature', self.chat_interface.temperature)
+                    self.chat_interface.top_p = params.get('top_p', self.chat_interface.top_p)
+                    self.chat_interface.presence_penalty = params.get('presence_penalty', self.chat_interface.presence_penalty)
+                    self.chat_interface.frequency_penalty = params.get('frequency_penalty', self.chat_interface.frequency_penalty)
                 
-                # Update session state
-                st.session_state.settings = stored_settings
-                
-                # Apply theme if it exists
-                theme = stored_settings.get('theme', 'light')
-                if theme in self.VALID_THEMES:
-                    self._update_theme(theme, save_settings=False)  # Avoid recursive save
-                
+                # Update session state settings
+                st.session_state.settings.update(stored_settings)
                 logger.info("Settings loaded from persistent storage")
-            except (KeyError, TypeError) as e:
-                logger.warning(f"Error loading settings: {e}. Using defaults.")
-                self._initialize_default_settings()
-        else:
-            logger.info("No stored settings found, using defaults")
-            self._initialize_default_settings()
+            else:
+                logger.info("No stored settings found, using defaults")
+                
+        except Exception as e:
+            logger.warning(f"Error loading settings: {e}. Using defaults.")
 
     def _initialize_default_settings(self) -> None:
         """Initialize default settings."""
