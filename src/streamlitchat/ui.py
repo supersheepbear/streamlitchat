@@ -5,8 +5,12 @@ It handles the layout, message display, input fields, and other UI elements.
 """
 
 import streamlit as st
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Set
 from .chat_interface import ChatInterface
+import logging
+
+# Add logger
+logger = logging.getLogger(__name__)
 
 class ChatUI:
     """Main UI class for the Streamlit chat interface."""
@@ -21,6 +25,7 @@ class ChatUI:
         self.chat_interface = chat_interface or ChatInterface()
         self._initialize_session_state()
         self._setup_page()
+        self._setup_keyboard_shortcuts()
 
     def _initialize_session_state(self) -> None:
         """Initialize Streamlit session state variables."""
@@ -28,6 +33,8 @@ class ChatUI:
             st.session_state.messages = []
         if "is_processing" not in st.session_state:
             st.session_state.is_processing = False
+        if "keyboard_trigger" not in st.session_state:
+            st.session_state.keyboard_trigger = None
 
     def _setup_page(self) -> None:
         """Configure the Streamlit page settings."""
@@ -129,8 +136,39 @@ class ChatUI:
                     mime="application/json"
                 )
 
+    def _setup_keyboard_shortcuts(self) -> None:
+        """Setup keyboard shortcuts using Streamlit components."""
+        st.markdown("""
+            <script>
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        window.streamlitKeyboardTrigger('enter');
+                    }
+                    if (e.key === 'l' && e.ctrlKey) {
+                        e.preventDefault();
+                        window.streamlitKeyboardTrigger('ctrl+l');
+                    }
+                });
+            </script>
+        """, unsafe_allow_html=True)
+
+    async def _handle_keyboard_shortcuts(self) -> None:
+        """Handle keyboard shortcut events."""
+        if st.session_state.keyboard_trigger == 'enter' and not st.session_state.is_processing:
+            await self._handle_user_input()
+            logger.debug("Enter key pressed - handling message input")
+        elif st.session_state.keyboard_trigger == 'ctrl+l':
+            self.chat_interface.clear_history()
+            st.session_state.messages = []
+            logger.info("Chat cleared via Ctrl+L shortcut")
+        
+        # Reset keyboard trigger
+        st.session_state.keyboard_trigger = None
+
     async def render(self) -> None:
         """Render the complete chat interface."""
         self._render_sidebar()
         self._display_messages()
+        await self._handle_keyboard_shortcuts()
         await self._handle_user_input()

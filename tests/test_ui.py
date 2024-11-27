@@ -38,15 +38,32 @@ def chat_ui():
 def mock_st():
     """Fixture for mocking Streamlit."""
     with patch("streamlitchat.ui.st") as mock_st:
-        # Set up session state
-        mock_st.session_state = MagicMock()
-        mock_st.session_state.messages = []
-        mock_st.session_state.is_processing = False
+        # Create a proper dict-like object for session_state
+        class SessionState(dict):
+            def __init__(self):
+                super().__init__()
+                self.messages = []
+                self.is_processing = False
+                self.keyboard_trigger = None
+            
+            def __getattr__(self, key):
+                return self.get(key)
+            
+            def __setattr__(self, key, value):
+                self[key] = value
+
+        mock_st.session_state = SessionState()
         
         # Set up sidebar mocks
         mock_st.sidebar = MagicMock()
         mock_st.sidebar.selectbox.return_value = "gpt-3.5-turbo"
         mock_st.sidebar.text_input.return_value = ""
+        
+        # Mock other commonly used streamlit functions
+        mock_st.markdown = MagicMock()
+        mock_st.chat_input = MagicMock()
+        mock_st.empty = MagicMock()
+        mock_st.error = MagicMock()
         
         yield mock_st
 
@@ -127,3 +144,86 @@ def test_sidebar_rendering(chat_ui):
     
     # Just verify the sidebar was used
     assert mock_st.sidebar.__enter__.called, "Sidebar context manager was not used"
+
+@pytest.mark.asyncio
+async def test_keyboard_shortcuts(mock_st):
+    """Test keyboard shortcuts functionality."""
+    # Setup
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # Mock chat input
+    mock_st.chat_input.return_value = "Test message"
+    mock_st.session_state.is_processing = False
+    mock_st.session_state.keyboard_trigger = 'enter'
+    
+    # Mock empty placeholder for streaming response
+    mock_placeholder = MagicMock()
+    mock_st.empty.return_value = mock_placeholder
+    
+    # Mock streaming response
+    mock_stream = AsyncMock()
+    mock_stream.__aiter__.return_value = ["Hello", " world!"]
+    
+    with patch.object(chat_ui.chat_interface, 'send_message_stream', return_value=mock_stream):
+        # Call handle keyboard shortcuts
+        await chat_ui._handle_keyboard_shortcuts()
+        
+        # Verify message was processed
+        assert mock_st.session_state.keyboard_trigger is None
+        assert len(mock_st.session_state.messages) > 0
+
+@pytest.mark.asyncio
+async def test_keyboard_shortcut_while_processing(mock_st):
+    """Test keyboard shortcuts are disabled while processing."""
+    # Setup
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # Set processing state
+    mock_st.session_state.is_processing = True
+    mock_st.session_state.keyboard_trigger = 'enter'
+    
+    # Call handle keyboard shortcuts
+    await chat_ui._handle_keyboard_shortcuts()
+    
+    # Verify no message was processed
+    assert len(mock_st.session_state.messages) == 0
+
+@pytest.mark.asyncio
+async def test_keyboard_shortcut_ctrl_l(mock_st):
+    """Test Ctrl+L shortcut to clear chat."""
+    # Setup
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # Add some messages
+    mock_st.session_state.messages = [
+        {"role": "user", "content": "test message"},
+        {"role": "assistant", "content": "test response"}
+    ]
+    
+    # Simulate Ctrl+L
+    mock_st.session_state.keyboard_trigger = 'ctrl+l'
+    
+    # Call handle keyboard shortcuts
+    await chat_ui._handle_keyboard_shortcuts()
+    
+    # Verify chat was cleared
+    assert len(mock_st.session_state.messages) == 0
+    assert mock_st.session_state.keyboard_trigger is None
+
+@pytest.mark.asyncio
+async def test_keyboard_shortcuts_setup(mock_st):
+    """Test keyboard shortcuts setup."""
+    # Setup
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # No need to call setup_keyboard_shortcuts again since it's called in __init__
+    
+    # Verify markdown was called with correct script
+    assert mock_st.markdown.call_count == 1
+    script_content = mock_st.markdown.call_args[0][0]
+    
+    # Check script contains our keyboard handlers
+    assert 'document.addEventListener(\'keydown\'' in script_content
+    assert 'Enter' in script_content
+    assert 'ctrl+l' in script_content
+    assert mock_st.markdown.call_args[1]['unsafe_allow_html'] is True
