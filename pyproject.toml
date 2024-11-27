@@ -5,26 +5,27 @@ build-backend = "setuptools.build_meta"  # Tells the build system to use setupto
 
 # Project metadata
 [project]
-name = "StreamlitChat"  # The name of the package as it will appear on PyPI
-version = "0.1.0"  # The current version of the package (using semantic versioning)
-description = "streamlit created chat interface giving api keys"  # A short, one-line description of what the package does
-readme = "README.rst"  # The path to the README file, which will be used as the long description on PyPI
+name = "StreamlitChat"
+version = "0.1.0"
+description = "streamlit created chat interface giving api keys"
+readme = "README.rst"
 authors = [
   {name = "Yang Xiong", email = "yxiong@umich.edu"}
 ]
 maintainers = [
   {name = "Yang Xiong", email = "yxiong@umich.edu"}
 ]
-classifiers = [  # PyPI classifiers to categorize your project (currently empty)
+classifiers = [
 
 ]
-license = {text = "MIT license"}  # Specifies that this project is released under the MIT license
+license = {text = "MIT license"}
 dependencies = [
     "streamlit>=1.29.0",
     "openai>=1.6.0",
     "aiohttp>=3.9.1",
     "python-dotenv>=1.0.0",
-    "typer>=0.9.0"
+    "typer>=0.9.0",
+    "psutil>=5.9.0"
 ]
 
 # Optional development dependencies
@@ -45,7 +46,8 @@ dev = [
     "pytest-cov>=4.1.0",
     "mypy==1.7.1",
     "coverage==7.3.2",
-    "build"
+    "build",
+    "psutil>=5.9.0"
 ]
 
 # Project URLs

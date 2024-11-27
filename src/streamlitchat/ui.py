@@ -8,6 +8,7 @@ import streamlit as st
 from typing import Optional, List, Dict, Any, Set
 from .chat_interface import ChatInterface
 import logging
+import time
 
 # Add logger
 logger = logging.getLogger(__name__)
@@ -18,6 +19,8 @@ class ChatUI:
     MAX_STORED_MESSAGES = 50  # Maximum number of messages to persist and load between sessions
     VALID_THEMES = {'light', 'dark'}  # Valid theme options
     MESSAGES_PER_PAGE = 10  # Number of messages to display per page
+    MESSAGES_PER_VIEW = 20  # Number of messages to render in viewport
+    MAX_RECYCLED_COMPONENTS = 30  # Maximum number of recycled message components
 
     def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -> None:
         """Initialize the ChatUI.
@@ -30,6 +33,8 @@ class ChatUI:
         self.chat_interface = chat_interface or ChatInterface()
         self.test_mode = test_mode
         self.current_page = 0  # Start at first page
+        self.scroll_position = 0
+        self.recycled_components: Dict[str, Any] = {}
         self._initialize_session_state()
         if not test_mode:
             self._setup_page()
@@ -477,3 +482,71 @@ class ChatUI:
         if self.current_page > 0:
             self.current_page -= 1
             logger.debug(f"Moved to page {self.current_page + 1} of {self._get_total_pages()}")
+
+    def _get_visible_messages(self) -> List[Dict[str, str]]:
+        """Get messages that should be visible in the current viewport.
+        
+        Returns:
+            List[Dict[str, str]]: List of messages to render.
+        """
+        total_messages = len(st.session_state.messages)
+        start_idx = max(0, min(
+            self.scroll_position,
+            total_messages - self.MESSAGES_PER_VIEW
+        ))
+        end_idx = min(start_idx + self.MESSAGES_PER_VIEW, total_messages)
+        
+        return st.session_state.messages[start_idx:end_idx]
+
+    def _get_recycled_message_components(self) -> Dict[str, Any]:
+        """Get recycled message components to improve rendering performance.
+        
+        Returns:
+            Dict[str, Any]: Map of message keys to recycled components.
+        """
+        # Clean up old components if too many
+        if len(self.recycled_components) > self.MAX_RECYCLED_COMPONENTS:
+            # Keep most recently used components
+            sorted_components = sorted(
+                self.recycled_components.items(),
+                key=lambda x: x[1].last_used,
+                reverse=True
+            )
+            self.recycled_components = dict(
+                sorted_components[:self.MAX_RECYCLED_COMPONENTS]
+            )
+        
+        return self.recycled_components
+
+    def _render_messages(self) -> None:
+        """Render visible messages efficiently."""
+        messages = self._get_visible_messages()
+        recycled = self._get_recycled_message_components()
+        
+        for message in messages:
+            key = f"{message['role']}:{message['content']}"
+            
+            # Try to reuse existing component
+            if key in recycled:
+                component = recycled[key]
+                component.last_used = time.time()
+            else:
+                # Create new component if needed
+                component = MessageComponent(message)
+                recycled[key] = component
+            
+            # Render the message
+            with st.chat_message(message["role"]):
+                component.render()
+
+class MessageComponent:
+    """Reusable message component for efficient rendering."""
+    
+    def __init__(self, message: Dict[str, str]):
+        """Initialize message component."""
+        self.message = message
+        self.last_used = time.time()
+        
+    def render(self) -> None:
+        """Render the message content."""
+        st.markdown(self.message["content"])

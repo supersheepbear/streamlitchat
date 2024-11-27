@@ -6,6 +6,7 @@ from streamlitchat.ui import ChatUI
 from streamlitchat.chat_interface import ChatInterface
 import streamlit as st
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -676,3 +677,67 @@ async def test_pagination_controls():
     chat_ui.current_page = total_pages - 1
     chat_ui._next_page()  # Should stay at last page
     assert chat_ui.current_page == total_pages - 1
+
+@pytest.mark.asyncio
+async def test_efficient_message_rendering():
+    """Test efficient message rendering with virtualization."""
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # Generate many test messages
+    test_messages = []
+    for i in range(1000):  # Large number of messages
+        test_messages.extend([
+            {"role": "user", "content": f"Message {i}"},
+            {"role": "assistant", "content": f"Response {i}"}
+        ])
+    
+    st.session_state.messages = test_messages
+    
+    # Test virtualized rendering
+    visible_messages = chat_ui._get_visible_messages()
+    
+    # Should only return messages in current viewport
+    assert len(visible_messages) <= chat_ui.MESSAGES_PER_VIEW
+    
+    # Test scroll position handling
+    chat_ui.scroll_position = 50
+    new_visible = chat_ui._get_visible_messages()
+    assert new_visible != visible_messages
+    
+    # Test message recycling
+    recycled_components = chat_ui._get_recycled_message_components()
+    assert len(recycled_components) <= chat_ui.MAX_RECYCLED_COMPONENTS
+
+@pytest.mark.asyncio
+async def test_message_rendering_performance():
+    """Test message rendering performance metrics."""
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # Generate test messages
+    test_messages = []
+    for i in range(100):
+        test_messages.extend([
+            {"role": "user", "content": f"Message {i}"},
+            {"role": "assistant", "content": f"Response {i}"}
+        ])
+    
+    st.session_state.messages = test_messages
+    
+    # Measure rendering time
+    start_time = time.time()
+    chat_ui._render_messages()
+    render_time = time.time() - start_time
+    
+    # Should render within performance target
+    assert render_time < 0.1  # 100ms target
+    
+    # Test memory usage
+    import psutil
+    process = psutil.Process()
+    memory_before = process.memory_info().rss
+    chat_ui._render_messages()
+    memory_after = process.memory_info().rss
+    memory_increase = memory_after - memory_before
+    
+    # Memory increase should be reasonable
+    assert memory_increase < 10 * 1024 * 1024  # 10MB limit
