@@ -68,7 +68,7 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 ### 9. Testing and Quality Assurance [🟡]
 - [x] Write unit tests
 - [x] Implement integration tests
-- [ ] Add end-to-end testing
+- [x] Add end-to-end testing
 - [ ] Implement performance testing
 - [x] Add security testing
 - [x] Create test documentation
