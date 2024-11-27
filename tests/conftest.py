@@ -9,3 +9,8 @@ def setup_logging():
         level=logging.DEBUG,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "ui: mark test as ui test"
+    )
