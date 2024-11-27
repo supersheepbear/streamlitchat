@@ -8,11 +8,16 @@ Basic Usage
 To use StreamlitChat in a project::
 
     import streamlitchat
+    import os
+    from dotenv import load_dotenv
+    
+    # Load environment variables
+    load_dotenv()
     
     # Initialize the chat interface
     chat = streamlitchat.ChatInterface(
-        api_key="your-api-key",  # Or use environment variable OPENAI_API_KEY
-        model="gpt-3.5-turbo"    # Default model
+        api_key=os.getenv("OPENAI_API_KEY", ""),
+        model_name="gpt-3.5-turbo"  # Default model
     )
     
     # Run the chat interface
@@ -21,18 +26,16 @@ To use StreamlitChat in a project::
 Configuration
 ------------
 
-You can customize the chat interface using settings::
+You can customize the chat interface with various parameters::
 
     chat = streamlitchat.ChatInterface(
-        api_key="your-api-key",
-        model="gpt-3.5-turbo",
-        settings={
-            'temperature': 0.7,
-            'top_p': 0.9,
-            'presence_penalty': 0.0,
-            'frequency_penalty': 0.0,
-            'theme': 'light'
-        }
+        api_key=os.getenv("OPENAI_API_KEY", ""),
+        model_name="gpt-3.5-turbo",
+        temperature=0.7,
+        top_p=0.9,
+        presence_penalty=0.0,
+        frequency_penalty=0.0,
+        api_base=None  # Optional custom API endpoint
     )
 
 Environment Variables
@@ -58,19 +61,13 @@ Here's a complete example with all available options::
 
     # Initialize with custom settings
     chat = streamlitchat.ChatInterface(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        model="gpt-4",
-        settings={
-            'temperature': 0.7,
-            'top_p': 0.9,
-            'presence_penalty': 0.0,
-            'frequency_penalty': 0.0,
-            'theme': 'dark',
-            'max_tokens': 2000,
-            'stream': True,
-            'cache_enabled': True,
-            'history_enabled': True
-        }
+        api_key=os.getenv("OPENAI_API_KEY", ""),
+        model_name="gpt-4",
+        temperature=0.7,
+        top_p=0.9,
+        presence_penalty=0.0,
+        frequency_penalty=0.0,
+        api_base=None  # Optional custom API endpoint
     )
 
     # Run the interface

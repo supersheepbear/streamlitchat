@@ -6,7 +6,7 @@ It handles the layout, message display, input fields, and other UI elements.
 
 import streamlit as st
 from typing import Optional, List, Dict, Any, Set
-from .chat_interface import ChatInterface
+from streamlitchat.chat_interface import ChatInterface
 import logging
 import time
 import re

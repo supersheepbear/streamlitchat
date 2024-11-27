@@ -11,8 +11,8 @@ load_dotenv()
 def main():
     # Initialize chat interface
     chat = streamlitchat.ChatInterface(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        model="gpt-3.5-turbo"
+        api_key=os.getenv("OPENAI_API_KEY", ""),
+        model_name="gpt-3.5-turbo"
     )
     
     # Run the interface
