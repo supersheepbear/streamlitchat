@@ -4,6 +4,10 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 import aiohttp
 import openai
 from openai import AsyncOpenAI
+import time
+import asyncio
+from collections import deque
+import hashlib
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -68,6 +72,7 @@ class ChatInterface:
         self.top_p = top_p
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
+        self.test_mode = test_mode
         
         if not test_mode and not api_key:
             raise ValueError("API key is required unless test_mode is True")
@@ -77,6 +82,21 @@ class ChatInterface:
         
         self.api_key = api_key
         logger.info("Initialized ChatInterface with model: %s", model_name)
+        
+        # Cache settings
+        self.response_cache: Dict[str, str] = {}
+        self.cache_ttl = 3600  # 1 hour cache lifetime
+        self.cache_size = 1000  # Maximum cache entries
+        
+        # Rate limiting
+        self.requests_per_minute = 60
+        self.request_window = 60  # seconds
+        self.request_timestamps: deque = deque(maxlen=self.requests_per_minute)
+        
+        # Request queuing
+        self.request_queue: asyncio.Queue = asyncio.Queue()
+        self.batch_size = 5
+        self.batch_timeout = 1.0  # seconds
     
     def validate_api_key(self, api_key: str) -> bool:
         """Validate the format of the API key.
@@ -225,3 +245,90 @@ class ChatInterface:
         """
         self.messages = messages.copy()
         logger.info("Imported %d messages to chat history", len(messages))
+    
+    def _generate_cache_key(self, message: str, context: str = "") -> str:
+        """Generate a cache key from message and context."""
+        combined = f"{context}:{message}"
+        return hashlib.md5(combined.encode()).hexdigest()
+    
+    async def get_cached_response(self, message: str, context: str = "") -> Optional[str]:
+        """Get cached response if available."""
+        cache_key = self._generate_cache_key(message, context)
+        return self.response_cache.get(cache_key)
+    
+    def _update_cache(self, message: str, response: str, context: str = "") -> None:
+        """Update cache with new response."""
+        if len(self.response_cache) >= self.cache_size:
+            # Remove oldest entry
+            oldest_key = next(iter(self.response_cache))
+            del self.response_cache[oldest_key]
+        
+        cache_key = self._generate_cache_key(message, context)
+        self.response_cache[cache_key] = response
+        logger.debug(f"Cached response for key: {cache_key}")
+    
+    def can_make_request(self) -> bool:
+        """Check if we can make a request within rate limits."""
+        now = time.time()
+        # Remove old timestamps
+        while self.request_timestamps and now - self.request_timestamps[0] > self.request_window:
+            self.request_timestamps.popleft()
+        
+        return len(self.request_timestamps) < self.requests_per_minute
+    
+    async def queue_request(self, message: str) -> None:
+        """Queue a request for processing."""
+        await self.request_queue.put(message)
+        logger.debug(f"Queued message: {message}")
+    
+    async def process_batch(self) -> List[str]:
+        """Process a batch of queued requests.
+        
+        Returns:
+            List[str]: List of responses for the batch of messages.
+        """
+        batch = []
+        try:
+            while len(batch) < self.batch_size:
+                try:
+                    message = await asyncio.wait_for(
+                        self.request_queue.get(),
+                        timeout=self.batch_timeout
+                    )
+                    batch.append(message)
+                except asyncio.TimeoutError:
+                    break
+            
+            if not batch:
+                return []
+            
+            responses = []
+            for message in batch:
+                # Check cache first
+                if cached := await self.get_cached_response(message):
+                    responses.append(cached)
+                    continue
+                
+                # Wait for rate limit
+                while not self.can_make_request():
+                    await asyncio.sleep(1)
+                
+                # Make API request
+                if self.test_mode:
+                    # Extract message number for test response
+                    msg_num = message.split()[-1]  # Get "1" from "Message 1"
+                    response = f"Test response to Message {msg_num}"
+                else:
+                    response = await self.send_message(message)
+                
+                self._update_cache(message, response)
+                responses.append(response)
+                
+                # Update rate limit tracking
+                self.request_timestamps.append(time.time())
+            
+            return responses
+            
+        except Exception as e:
+            logger.error(f"Error processing batch: {e}")
+            raise

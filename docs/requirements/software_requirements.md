@@ -60,10 +60,9 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 
 ### 8. Performance Optimization [ ]
 - [ ] Implement efficient message rendering
-- [ ] Add message pagination
-- [ ] Optimize API calls
-- [ ] Implement caching mechanism
-- [ ] Add request queuing system
+- [x] Optimize API calls
+- [x] Implement caching mechanism
+- [x] Add request queuing system
 
 ### 9. Testing and Quality Assurance [🟡]
 - [x] Write unit tests

@@ -17,6 +17,7 @@ class ChatUI:
 
     MAX_STORED_MESSAGES = 50  # Maximum number of messages to persist and load between sessions
     VALID_THEMES = {'light', 'dark'}  # Valid theme options
+    MESSAGES_PER_PAGE = 10  # Number of messages to display per page
 
     def __init__(self, chat_interface: Optional[ChatInterface] = None, test_mode: bool = False) -> None:
         """Initialize the ChatUI.
@@ -28,6 +29,7 @@ class ChatUI:
         """
         self.chat_interface = chat_interface or ChatInterface()
         self.test_mode = test_mode
+        self.current_page = 0  # Start at first page
         self._initialize_session_state()
         if not test_mode:
             self._setup_page()
@@ -85,9 +87,23 @@ class ChatUI:
             st.markdown(content)
 
     def _display_messages(self) -> None:
-        """Display all messages in the chat history."""
-        for message in st.session_state.messages:
+        """Display paginated messages in the chat interface."""
+        messages = self._get_paginated_messages()
+        for message in messages:
             self._display_message(message)
+        
+        # Add pagination controls if more than one page
+        total_pages = self._get_total_pages()
+        if total_pages > 1:
+            col1, col2, col3 = st.columns([1, 3, 1])
+            with col1:
+                if st.button("← Previous") and self.current_page > 0:
+                    self._prev_page()
+            with col2:
+                st.write(f"Page {self.current_page + 1} of {total_pages}")
+            with col3:
+                if st.button("Next →") and self.current_page < total_pages - 1:
+                    self._next_page()
 
     async def _handle_user_input(self) -> None:
         """Handle user input and generate AI response."""
@@ -414,3 +430,50 @@ class ChatUI:
         # Save settings to persist theme
         if save_settings:
             self._save_settings()
+
+    def _get_total_pages(self) -> int:
+        """Get total number of pages based on conversation count."""
+        total_messages = len(st.session_state.messages)
+        # Each conversation takes 2 messages (user + assistant)
+        conversations = total_messages // 2
+        conversations_per_page = self.MESSAGES_PER_PAGE // 2
+        return max(1, (conversations + conversations_per_page - 1) // conversations_per_page)
+
+    def _get_paginated_messages(self) -> List[Dict[str, str]]:
+        """Get messages for current page.
+        
+        Returns:
+            List[Dict[str, str]]: List of messages for the current page, newest conversations first.
+            Each conversation consists of a user message followed by an assistant response.
+        """
+        total_messages = len(st.session_state.messages)
+        # Calculate indices based on conversation pairs
+        conversations_per_page = self.MESSAGES_PER_PAGE // 2
+        
+        # Calculate start and end indices for conversations
+        start_conv = max(0, (total_messages // 2) - (self.current_page + 1) * conversations_per_page)
+        end_conv = max(0, (total_messages // 2) - self.current_page * conversations_per_page)
+        
+        # Convert conversation indices to message indices and get messages
+        messages = []
+        for i in range(end_conv - 1, start_conv - 1, -1):  # Iterate in reverse
+            if i * 2 + 1 < total_messages:  # Check if we have both user and assistant messages
+                messages.extend([
+                    st.session_state.messages[i * 2],      # User message
+                    st.session_state.messages[i * 2 + 1]   # Assistant response
+                ])
+        
+        return messages
+
+    def _next_page(self) -> None:
+        """Go to next page if available."""
+        total_pages = self._get_total_pages()
+        if self.current_page < total_pages - 1:
+            self.current_page += 1
+            logger.debug(f"Moved to page {self.current_page + 1} of {total_pages}")
+
+    def _prev_page(self) -> None:
+        """Go to previous page if available."""
+        if self.current_page > 0:
+            self.current_page -= 1
+            logger.debug(f"Moved to page {self.current_page + 1} of {self._get_total_pages()}")
