@@ -41,9 +41,9 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 - [x] Add copy message functionality
 - [x] Implement auto-scroll to latest message
 - [x] Add keyboard shortcuts (Enter to send, etc.)
-- [ ] Implement responsive design
+- [x] Implement responsive design
 
-### 6. Settings and Configuration [🟡]
+### 6. Settings and Configuration [✓]
 - [x] Create settings interface
 - [x] Add API endpoint configuration
 - [x] Implement model selection
@@ -203,28 +203,28 @@ StreamlitChat is a Python package that implements a ChatGPT-like web interface u
 ## To Be Implemented
 
 ### Chat Interface
-- [ ] Message editing
-- [ ] Message deletion
-- [ ] Code block syntax highlighting
-- [ ] Markdown rendering
+- [x] Message editing
+- [x] Message deletion
+- [x] Code block syntax highlighting
+- [x] Markdown rendering
 - [ ] File upload/attachment support
-- [ ] Message search functionality
+- [x] Message search functionality
 
 ### Advanced Features
-- [ ] Conversation branching
-- [ ] Context window management
-- [ ] Custom system prompts
-- [ ] Model selection (GPT-3.5, GPT-4, etc.)
-- [ ] API key management UI
-- [ ] Usage tracking and limits
+- [x] Conversation branching
+- [x] Context window management
+- [x] Custom system prompts
+- [x] Model selection (GPT-3.5, GPT-4, etc.)
+- [x] API key management UI
+- [x] Usage tracking and limits
 
 ### Export & Import
-- [ ] Export chat history to file
-- [ ] Import chat history from file
+- [x] Export chat history to file
+- [x] Import chat history from file
 - [ ] Share conversation links
 
 ### Analytics & Monitoring
-- [ ] Token usage tracking
-- [ ] Response time metrics
-- [ ] Error rate monitoring
-- [ ] Cost estimation
+- [x] Token usage tracking
+- [x] Response time metrics
+- [x] Error rate monitoring
+- [x] Cost estimation
