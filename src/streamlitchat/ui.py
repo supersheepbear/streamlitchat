@@ -35,6 +35,13 @@ class ChatUI:
             st.session_state.is_processing = False
         if "keyboard_trigger" not in st.session_state:
             st.session_state.keyboard_trigger = None
+        if "api_params" not in st.session_state:
+            st.session_state.api_params = {
+                'temperature': 0.7,
+                'top_p': 0.9,
+                'presence_penalty': 0.0,
+                'frequency_penalty': 0.0
+            }
 
     def _setup_page(self) -> None:
         """Configure the Streamlit page settings."""
@@ -119,6 +126,53 @@ class ChatUI:
                     self.chat_interface.api_key = api_key
                 except ValueError as e:
                     st.error(str(e))
+
+            # API Parameters
+            st.subheader("API Parameters")
+            
+            # Temperature
+            temperature = st.slider(
+                "Temperature",
+                min_value=0.0,
+                max_value=2.0,
+                value=st.session_state.api_params.get('temperature', 0.7),
+                help="Controls randomness in responses"
+            )
+            self.chat_interface.temperature = temperature
+            st.session_state.api_params['temperature'] = temperature
+            
+            # Top P
+            top_p = st.slider(
+                "Top P",
+                min_value=0.0,
+                max_value=1.0,
+                value=st.session_state.api_params.get('top_p', 0.9),
+                help="Controls diversity via nucleus sampling"
+            )
+            self.chat_interface.top_p = top_p
+            st.session_state.api_params['top_p'] = top_p
+            
+            # Presence Penalty
+            presence_penalty = st.slider(
+                "Presence Penalty",
+                min_value=-2.0,
+                max_value=2.0,
+                value=st.session_state.api_params.get('presence_penalty', 0.0),
+                help="Penalty for new tokens"
+            )
+            self.chat_interface.presence_penalty = presence_penalty
+            st.session_state.api_params['presence_penalty'] = presence_penalty
+            
+            # Frequency Penalty
+            frequency_penalty = st.slider(
+                "Frequency Penalty",
+                min_value=-2.0,
+                max_value=2.0,
+                value=st.session_state.api_params.get('frequency_penalty', 0.0),
+                help="Penalty for frequent tokens"
+            )
+            self.chat_interface.frequency_penalty = frequency_penalty
+            st.session_state.api_params['frequency_penalty'] = frequency_penalty
 
             # Chat controls
             st.header("Chat Controls")

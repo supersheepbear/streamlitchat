@@ -45,6 +45,12 @@ def mock_st():
                 self.messages = []
                 self.is_processing = False
                 self.keyboard_trigger = None
+                self.api_params = {
+                    'temperature': 0.7,
+                    'top_p': 0.9,
+                    'presence_penalty': 0.0,
+                    'frequency_penalty': 0.0
+                }
             
             def __getattr__(self, key):
                 return self.get(key)
@@ -54,10 +60,18 @@ def mock_st():
 
         mock_st.session_state = SessionState()
         
-        # Set up sidebar mocks
+        # Set up sidebar as context manager
+        sidebar = MagicMock()
         mock_st.sidebar = MagicMock()
+        mock_st.sidebar.__enter__ = MagicMock(return_value=sidebar)
+        mock_st.sidebar.__exit__ = MagicMock()
+        
+        # Mock sidebar methods
         mock_st.sidebar.selectbox.return_value = "gpt-3.5-turbo"
         mock_st.sidebar.text_input.return_value = ""
+        mock_st.sidebar.slider = MagicMock()
+        mock_st.sidebar.header = MagicMock()
+        mock_st.sidebar.subheader = MagicMock()
         
         # Mock other commonly used streamlit functions
         mock_st.markdown = MagicMock()
@@ -227,3 +241,77 @@ async def test_keyboard_shortcuts_setup(mock_st):
     assert 'Enter' in script_content
     assert 'ctrl+l' in script_content
     assert mock_st.markdown.call_args[1]['unsafe_allow_html'] is True
+
+@pytest.mark.asyncio
+async def test_api_parameters_configuration(mock_st):
+    """Test API parameters configuration in settings."""
+    # Setup
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # Mock sidebar inputs with context manager
+    with mock_st.sidebar:
+        mock_st.sidebar.slider.side_effect = [
+            0.7,  # temperature
+            0.9,  # top_p
+            2,    # presence_penalty
+            2     # frequency_penalty
+        ]
+    
+        # Render sidebar
+        chat_ui._render_sidebar()
+    
+        # Verify sliders were created with correct parameters
+        assert mock_st.sidebar.slider.call_count == 4
+        
+        # Check temperature slider
+        temp_call = mock_st.sidebar.slider.call_args_list[0]
+        assert temp_call[1]['label'] == "Temperature"
+        assert temp_call[1]['min_value'] == 0.0
+        assert temp_call[1]['max_value'] == 2.0
+        assert temp_call[1]['value'] == 0.7
+        
+        # Check top_p slider
+        top_p_call = mock_st.sidebar.slider.call_args_list[1]
+        assert top_p_call[1]['label'] == "Top P"
+        assert top_p_call[1]['min_value'] == 0.0
+        assert top_p_call[1]['max_value'] == 1.0
+        assert top_p_call[1]['value'] == 0.9
+        
+        # Verify values were set in chat interface
+        assert chat_ui.chat_interface.temperature == 0.7
+        assert chat_ui.chat_interface.top_p == 0.9
+        assert chat_ui.chat_interface.presence_penalty == 2
+        assert chat_ui.chat_interface.frequency_penalty == 2
+
+@pytest.mark.asyncio
+async def test_api_parameters_persistence(mock_st):
+    """Test that API parameters persist between sessions."""
+    # Setup
+    chat_ui = ChatUI(ChatInterface(test_mode=True))
+    
+    # Mock session state with custom values
+    mock_st.session_state.api_params = {
+        'temperature': 0.8,
+        'top_p': 0.95,
+        'presence_penalty': 1.5,
+        'frequency_penalty': 1.2
+    }
+    
+    # Render sidebar with context manager
+    with mock_st.sidebar:
+        # Mock slider returns to match session state values
+        mock_st.sidebar.slider.side_effect = [
+            0.8,  # temperature
+            0.95, # top_p
+            1.5,  # presence_penalty
+            1.2   # frequency_penalty
+        ]
+        
+        chat_ui._render_sidebar()
+    
+        # Verify sliders were initialized with session state values
+        slider_calls = mock_st.sidebar.slider.call_args_list
+        assert slider_calls[0][1]['value'] == 0.8  # temperature
+        assert slider_calls[1][1]['value'] == 0.95  # top_p
+        assert slider_calls[2][1]['value'] == 1.5  # presence_penalty
+        assert slider_calls[3][1]['value'] == 1.2  # frequency_penalty

@@ -19,6 +19,10 @@ class ChatInterface:
         model_name (str): Name of the model to use for chat.
         api_key (str): API key for authentication.
         api_base (Optional[str]): Base URL for API requests.
+        temperature (float): Controls randomness in responses.
+        top_p (float): Controls diversity via nucleus sampling.
+        presence_penalty (float): Penalty for new tokens.
+        frequency_penalty (float): Penalty for frequent tokens.
     
     Examples:
         >>> chat = ChatInterface(api_key="your-api-key")
@@ -36,6 +40,10 @@ class ChatInterface:
         api_key: str = "",
         model_name: str = "gpt-3.5-turbo",
         api_base: Optional[str] = None,
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+        presence_penalty: float = 0.0,
+        frequency_penalty: float = 0.0,
         test_mode: bool = False
     ) -> None:
         """Initialize the ChatInterface.
@@ -44,6 +52,10 @@ class ChatInterface:
             api_key: The API key to use. Required unless test_mode is True.
             model_name: The name of the model to use. Defaults to "gpt-3.5-turbo".
             api_base: Optional base URL for API requests. Defaults to None.
+            temperature: Controls randomness in responses. Defaults to 0.7.
+            top_p: Controls diversity via nucleus sampling. Defaults to 0.9.
+            presence_penalty: Penalty for new tokens. Defaults to 0.0.
+            frequency_penalty: Penalty for frequent tokens. Defaults to 0.0.
             test_mode: If True, skip API key validation. Defaults to False.
         
         Raises:
@@ -52,6 +64,10 @@ class ChatInterface:
         self.messages: List[Dict[str, str]] = []
         self.model_name = model_name
         self.api_base = api_base
+        self.temperature = temperature
+        self.top_p = top_p
+        self.presence_penalty = presence_penalty
+        self.frequency_penalty = frequency_penalty
         
         if not test_mode and not api_key:
             raise ValueError("API key is required unless test_mode is True")
@@ -156,12 +172,16 @@ class ChatInterface:
                 base_url=self.api_base
             )
             
-            # Send streaming request to API
+            # Send streaming request to API with parameters
             stream = await client.chat.completions.create(
                 model=self.model_name,
                 messages=[{"role": m["role"], "content": m["content"]} 
                          for m in self.messages],
-                stream=True
+                stream=True,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                presence_penalty=self.presence_penalty,
+                frequency_penalty=self.frequency_penalty
             )
             
             full_response = []
